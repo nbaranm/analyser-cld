@@ -849,8 +849,12 @@ async function startAnalysis() {
   const iv = setInterval(() => { cur++; renderSteps(); if(cur>=steps.length) clearInterval(iv); }, 800);
 
   let result;
-  if (S.files.length > 0) result = await callAPI(S.files[0], genre);
-  else { await sleep(6400); result = mockResult(S.model, genre, link, focus); }
+  if (link || S.files.length > 0) {
+    result = await callAPI(S.files[0] || null, genre, link);
+  } else {
+    await sleep(6400);
+    result = mockResult(S.model, genre, link, focus);
+  }
 
   clearInterval(iv); cur = steps.length; renderSteps();
   await sleep(500);
@@ -864,23 +868,92 @@ async function startAnalysis() {
   goPage('report');
 }
 
-async function callAPI(file, genre) {
+async function callAPI(file, genre, storeUrl) {
   try {
     const form = new FormData();
-    form.append('file', file);
-    form.append('mode', file.type.startsWith('video') ? 'video' : 'image');
+    // Always send mode (required by API)
+    const isVideo = file && file.type.startsWith('video');
+    form.append('mode', isVideo ? 'video' : 'image');
     form.append('depth_level', S.model === 'E' ? '3' : S.model === 'S' ? '2' : '1');
-    form.append('stack_hint', 'unity');
+    form.append('genre', genre || 'Casual');
+    form.append('mono_model', S.mono || 'F2P');
+    form.append('platform', isVideo ? 'Mobile' : 'PC');
+    if (storeUrl) form.append('store_url', storeUrl);
+    if (file) form.append('file', file);
     const url = document.getElementById('apiUrl')?.value || S.apiUrl;
     const res = await fetch(`${url}/analyze/sync`, { method:'POST', body:form });
-    if (!res.ok) throw new Error('api');
-    return transformAPI(await res.json(), genre);
-  } catch(e) { return mockResult(S.model, genre, file.name, 'Full Audit'); }
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error('api: ' + err);
+    }
+    const data = await res.json();
+    return transformAPINew(data, genre);
+  } catch(e) {
+    console.error('API error:', e);
+    return mockResult(S.model, genre, storeUrl || (file && file.name) || 'Game', 'Full Audit');
+  }
 }
 
 function transformAPI(d, genre) {
   const base = buildBaseSections(genre, '', d);
   return { model: S.model, sections: base.sections, actionPlan: base.actionPlan, benchmarks: base.benchmarks, roadmap: base.roadmap, roi: base.roi };
+}
+
+function transformAPINew(d, genre) {
+  // New format from real API with web search
+  if (d.error) {
+    console.warn('API returned error:', d.error);
+    return mockResult(S.model, genre, 'Game', 'Full Audit');
+  }
+  if (!d.sections) {
+    return mockResult(S.model, genre, 'Game', 'Full Audit');
+  }
+  const sectionMap = {
+    'ui_ux': {id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️'},
+    'game_ux': {id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄'},
+    'marketing': {id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯'},
+    'monetization': {id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰'},
+    'performance': {id:5, title:'PERFORMANCE: Technical & Engine Metrics', icon:'⚙️'},
+    'retention': {id:6, title:'RETENTION: LTV & Engagement Loops', icon:'🔁'},
+    'strategy': {id:7, title:'STRATEGY: Competitive Position & Roadmap', icon:'🗺️'},
+  };
+  const sections = Object.entries(sectionMap).map(([key, meta]) => {
+    const sec = d.sections[key] || {};
+    const rawMetrics = sec.metrics || [];
+    const metrics = rawMetrics.map(m => ({
+      l: m.label || m.l || 'Metric',
+      v: m.value || m.v || '—',
+      f: m.flag || m.f || 'ok',
+      c: (m.flag === 'risk' || m.f === 'risk') ? 'r' : (m.flag === 'warn' || m.f === 'warn') ? 'y' : 'g',
+      d: m.desc || m.d || '',
+    }));
+    return { ...meta, score: sec.score || 50, metrics, summary: sec.summary || '' };
+  });
+  const actionPlan = (d.action_plan || []).map(a => ({
+    t: a.issue || a.t || '',
+    s: '⚡ ' + (a.action || a.s || ''),
+  }));
+  const benchmarks = (d.benchmarks || []).map(b => ({
+    metric: b.metric, you: b.you, bench: b.bench, diff: b.diff,
+    status: b.status === 'good' ? 'good' : b.status === 'bad' ? 'bad' : 'mid',
+  }));
+  const rm = d.roadmap || {};
+  const roi = d.roi || {};
+  return {
+    model: S.model,
+    gameTitle: d.game_title || 'Game Analysis',
+    confidence: d.confidence || 70,
+    sections,
+    actionPlan,
+    benchmarks,
+    roadmap: { d30: rm.d30 || [], d60: rm.d60 || [], d90: rm.d90 || [] },
+    roi: {
+      currentLTV: roi.current_review_score || '—',
+      targetLTV: roi.target_review_score || '—',
+      roiPotential: roi.estimated_owner_increase || '—',
+      paybackPeriod: roi.priority_fix_roi || '—',
+    },
+  };
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
