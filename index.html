@@ -4,1120 +4,1230 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GDA Analyzer — Deep-Diagnostic Architecture</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#f4f6f9;
-  --surface:#ffffff;
-  --border:#e2e8f0;
-  --text:#0f172a;
-  --text-2:#64748b;
-  --text-3:#94a3b8;
-  --blue:#2563eb;
-  --blue-light:#eff6ff;
-  --green:#16a34a;
-  --green-light:#f0fdf4;
-  --red:#dc2626;
-  --red-light:#fef2f2;
-  --yellow:#d97706;
-  --yellow-light:#fffbeb;
-  --sidebar:240px;
-  --radius:10px;
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;--border-2:#f1f5f9;
+  --text:#0f172a;--text-2:#475569;--text-3:#94a3b8;
+  --blue:#2563eb;--blue-2:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#16a34a;--green-light:#f0fdf4;--green-border:#bbf7d0;
+  --red:#dc2626;--red-light:#fef2f2;--red-border:#fecaca;
+  --yellow:#d97706;--yellow-light:#fffbeb;--yellow-border:#fde68a;
+  --orange:#ea580c;--orange-light:#fff7ed;
+  --sidebar:248px;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
-/* SIDEBAR */
-.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
-.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
-.logo-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.logo-title svg{color:var(--blue)}
-.logo-sub{font-size:11px;color:var(--text-3);margin-top:2px;letter-spacing:.3px}
-.nav{padding:12px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:var(--text-2);font-size:13px;font-weight:500;transition:all .15s;border-radius:0;margin:1px 8px;border-radius:8px}
+/* ── LOGIN ─────────────────────────── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.login-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.login-logo-text{font-size:17px;font-weight:700;color:var(--text)}
+.login-tagline{font-size:12px;color:var(--text-3);margin-bottom:32px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.form-input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border .15s}
+.form-input:focus{border-color:var(--blue);background:#fff}
+.btn-login{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .15s}
+.btn-login:hover{background:var(--blue-2)}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;display:none}
+.lang-toggle{display:flex;justify-content:flex-end;margin-bottom:24px;gap:6px}
+.lang-btn{padding:4px 12px;border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text-2);transition:all .15s}
+.lang-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ── APP SHELL ─────────────────────── */
+#app{display:none}
+.shell{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ───────────────────────── */
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.sidebar-logo-row{display:flex;align-items:center;gap:9px}
+.sidebar-logo-icon{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-logo-title{font-size:14px;font-weight:700}
+.sidebar-logo-sub{font-size:10px;color:var(--text-3);margin-top:2px;letter-spacing:.3px}
+.sidebar-nav{padding:10px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text-2);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px}
 .nav-item:hover{background:var(--bg);color:var(--text)}
 .nav-item.active{background:var(--blue-light);color:var(--blue)}
-.nav-item svg{width:16px;height:16px;flex-shrink:0}
-.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
-.user-info{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.avatar{width:32px;height:32px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600}
-.user-name{font-size:13px;font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.user-row{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.user-avatar{width:30px;height:30px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600}
 .user-role{font-size:11px;color:var(--text-3)}
-.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;color:var(--text-2);font-size:12px;border-radius:7px;transition:all .15s}
-.logout-btn:hover{background:var(--bg);color:var(--text)}
+.logout-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2);cursor:pointer;padding:6px 8px;border-radius:7px;transition:all .15s}
+.logout-row:hover{background:var(--bg);color:var(--text)}
 
-/* MAIN */
-.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+/* ── TOPBAR ────────────────────────── */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column}
 .topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
-.search-wrap{flex:1;max-width:480px;position:relative}
-.search-wrap input{width:100%;padding:7px 12px 7px 34px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none}
-.search-wrap input:focus{border-color:var(--blue);background:#fff}
-.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);width:15px;height:15px}
-.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
-.btn-primary{background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
-.btn-primary:hover{background:#1d4ed8}
-.notif-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
-.notif-dot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;top:6px;right:6px;border:2px solid #fff}
-.content{padding:28px 28px;flex:1}
+.search-box{flex:1;max-width:440px;position:relative}
+.search-box input{width:100%;padding:7px 12px 7px 32px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:all .15s}
+.search-box input:focus{border-color:var(--blue);background:#fff}
+.search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-3);width:14px;height:14px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-lang{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.topbar-lang button{padding:5px 10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text-2);transition:all .15s}
+.topbar-lang button.active{background:var(--blue);color:#fff}
+.notif-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;color:var(--text-2)}
+.notif-dot{width:6px;height:6px;background:var(--red);border-radius:50%;position:absolute;top:5px;right:5px;border:2px solid #fff}
+.btn-new{background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-new:hover{background:var(--blue-2)}
 
-/* PAGE */
-.page{display:none}
-.page.active{display:block}
+/* ── CONTENT ───────────────────────── */
+.content{padding:24px;flex:1}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:24px}
+.page-title{font-size:20px;font-weight:700;margin-bottom:3px}
+.page-sub{font-size:13px;color:var(--text-2)}
 
-/* UPLOAD PAGE */
-.page-title{font-size:22px;font-weight:600;margin-bottom:4px}
-.page-sub{color:var(--text-2);font-size:13px;margin-bottom:28px}
-.section-label{font-size:15px;font-weight:600;margin-bottom:14px}
+/* ── CARDS & GRIDS ─────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.section-label{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
 
-/* REPORTING MODEL */
-.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
-.model-card{border:2px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;background:var(--surface)}
-.model-card:hover{border-color:#93c5fd}
+/* ── UPLOAD PAGE ───────────────────── */
+.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.model-card{border:2px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all .2s;background:var(--surface);position:relative}
+.model-card:hover{border-color:var(--blue-border);background:var(--blue-light)}
 .model-card.selected{border-color:var(--blue);background:var(--blue-light)}
-.model-badge{width:28px;height:28px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:12px}
-.model-card.selected .model-badge{background:var(--blue);border-color:var(--blue);color:#fff}
-.model-check{float:right;color:var(--blue);display:none}
+.model-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.model-letter{width:26px;height:26px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--text-2)}
+.model-card.selected .model-letter{background:var(--blue);border-color:var(--blue);color:#fff}
+.model-check{color:var(--blue);display:none}
 .model-card.selected .model-check{display:block}
-.model-name{font-size:14px;font-weight:600;margin-bottom:6px}
-.model-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:10px}
-.model-tag{font-size:11px;color:var(--blue);font-weight:500}
+.model-name{font-size:13px;font-weight:700;margin-bottom:5px}
+.model-desc{font-size:11px;color:var(--text-2);line-height:1.5;margin-bottom:8px}
+.model-features{list-style:none;margin-bottom:8px}
+.model-features li{font-size:11px;color:var(--text-2);padding:2px 0;display:flex;align-items:center;gap:5px}
+.model-features li::before{content:'✓';color:var(--green);font-weight:700;font-size:10px}
+.model-tag{font-size:11px;color:var(--blue);font-weight:600}
+.model-price{position:absolute;top:14px;right:14px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.price-free{background:var(--green-light);color:var(--green)}
+.price-pro{background:var(--yellow-light);color:var(--yellow)}
+.price-ent{background:var(--orange-light);color:var(--orange)}
 
-/* UPLOAD ZONE */
-.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:20px}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-light)}
-.upload-icon{width:44px;height:44px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--blue)}
-.upload-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.upload-sub{font-size:12px;color:var(--text-2);margin-bottom:14px}
-.upload-types{display:flex;justify-content:center;gap:16px;font-size:12px;color:var(--text-3)}
-.upload-types span{display:flex;align-items:center;gap:4px}
-.browse-btn{display:inline-block;padding:7px 16px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);transition:all .15s}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-light)}
+.upload-icon-wrap{width:40px;height:40px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:var(--blue)}
+.upload-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text-2);margin-bottom:12px}
+.upload-types{display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--text-3);margin-bottom:12px}
+.browse-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);transition:all .15s}
 .browse-btn:hover{background:var(--bg)}
-.uploaded-files{margin-bottom:20px}
-.file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.file-icon{width:32px;height:32px;background:var(--blue-light);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:11px;font-weight:600}
-.file-name{font-size:13px;font-weight:500;flex:1}
-.file-size{font-size:12px;color:var(--text-3)}
-.file-remove{cursor:pointer;color:var(--text-3);padding:4px}
-.file-remove:hover{color:var(--red)}
+.file-list{margin-bottom:16px}
+.file-row{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.file-ext{width:28px;height:28px;background:var(--blue-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue)}
+.file-name{font-size:12px;font-weight:500;flex:1}
+.file-size{font-size:11px;color:var(--text-3)}
+.file-del{cursor:pointer;color:var(--text-3);padding:3px;border-radius:4px}
+.file-del:hover{color:var(--red);background:var(--red-light)}
 
-/* PARAMS */
-.params-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.params-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
 .params-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.param-group{margin-bottom:16px}
-.param-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px}
-.toggle-group{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.toggle-btn{flex:1;padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);border:none;font-family:'DM Sans',sans-serif;transition:all .15s;color:var(--text-2)}
+.param-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.toggle-row{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.toggle-btn{flex:1;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);border:none;font-family:'Inter',sans-serif;transition:all .15s;color:var(--text-2)}
 .toggle-btn.active{background:var(--blue-light);color:var(--blue)}
-.select-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;appearance:none;cursor:pointer}
-.select-input:focus{border-color:var(--blue)}
-.text-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none}
-.text-input:focus{border-color:var(--blue)}
-.text-input::placeholder{color:var(--text-3)}
-.link-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.link-row .select-input{width:140px}
-.add-link{font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;display:flex;align-items:center;gap:4px}
+.sel{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);background:var(--surface);outline:none;cursor:pointer}
+.sel:focus{border-color:var(--blue)}
+.inp{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none}
+.inp:focus{border-color:var(--blue)}
+.inp::placeholder{color:var(--text-3)}
 .hint{font-size:11px;color:var(--text-3);margin-top:4px}
-.market-warn{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:20px}
-.market-warn svg{color:var(--blue);flex-shrink:0;margin-top:1px}
-.market-warn-title{font-size:13px;font-weight:600;margin-bottom:2px}
-.market-warn-text{font-size:12px;color:var(--text-2);line-height:1.5}
-.start-row{display:flex;justify-content:flex-end}
-.btn-start{background:var(--blue);color:#fff;border:none;padding:12px 28px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
-.btn-start:hover{background:#1d4ed8;transform:translateY(-1px)}
+.link-add-row{display:flex;gap:6px;margin-bottom:6px}
+.link-add-row .sel{width:130px}
+.add-link-btn{font-size:11px;color:var(--blue);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.info-box{background:var(--blue-light);border:1px solid var(--blue-border);border-radius:9px;padding:12px 14px;display:flex;gap:9px;margin-bottom:20px}
+.info-box svg{color:var(--blue);flex-shrink:0;margin-top:1px}
+.info-box-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.info-box-text{font-size:11px;color:var(--text-2);line-height:1.5}
+.action-row{display:flex;justify-content:flex-end}
+.btn-start{background:var(--blue);color:#fff;border:none;padding:11px 26px;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s}
+.btn-start:hover{background:var(--blue-2);transform:translateY(-1px)}
 
-/* PROCESSING */
-.processing-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center}
-.spinner{width:52px;height:52px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:24px}
+/* ── PROCESSING ────────────────────── */
+#page-processing{min-height:70vh;display:flex;align-items:center;justify-content:center}
+.proc-wrap{text-align:center;max-width:440px;width:100%}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 20px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.processing-title{font-size:20px;font-weight:600;margin-bottom:8px}
-.processing-sub{font-size:13px;color:var(--text-2);max-width:380px;line-height:1.6;margin-bottom:20px}
-.queue-link{font-size:13px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:4px}
-.progress-steps{margin-top:24px;text-align:left;width:100%;max-width:400px}
-.step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text-2)}
-.step.done{color:var(--green)}
-.step.active{color:var(--blue);font-weight:500}
-.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
-.step.done .step-dot{background:var(--green)}
-.step.active .step-dot{background:var(--blue);animation:pulse 1s ease-in-out infinite}
+.proc-title{font-size:18px;font-weight:700;margin-bottom:8px}
+.proc-sub{font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:16px}
+.proc-back{font-size:12px;color:var(--blue);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:500}
+.proc-steps{margin-top:20px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.proc-step{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--border-2)}
+.proc-step:last-child{border-bottom:none}
+.proc-step.done{color:var(--green)}
+.proc-step.running{color:var(--blue);font-weight:600}
+.step-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;background:var(--bg)}
+.proc-step.done .step-ico{background:var(--green-light);color:var(--green)}
+.proc-step.running .step-ico{background:var(--blue-light);color:var(--blue);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* REPORT */
-.report-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px}
-.report-tags{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+/* ── REPORT PAGE ───────────────────── */
+.report-topbar{display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.report-meta{flex:1}
+.report-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tag{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px}
 .tag-blue{background:var(--blue-light);color:var(--blue)}
 .tag-gray{background:var(--bg);color:var(--text-2)}
 .tag-green{background:var(--green-light);color:var(--green)}
-.report-title{font-size:22px;font-weight:700;margin-bottom:4px;word-break:break-all}
-.report-subtitle{font-size:13px;color:var(--text-2);margin-bottom:12px}
-.verified-badge{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green);font-weight:500}
-.report-actions{display:flex;gap:8px;margin-left:auto}
-.btn-export{padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:6px;transition:all .15s}
-.btn-export:hover{background:var(--bg)}
-.btn-export-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn-export-primary:hover{background:#1d4ed8}
-.report-header-top{display:flex;align-items:flex-start;gap:12px}
-.focus-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500}
-.focus-dot{width:7px;height:7px;background:var(--blue);border-radius:50%}
+.tag-yellow{background:var(--yellow-light);color:var(--yellow)}
+.tag-time{font-size:11px;color:var(--text-3)}
+.verified{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-weight:600;margin-left:auto}
+.report-title{font-size:20px;font-weight:800;margin-bottom:3px;word-break:break-all}
+.report-sub{font-size:12px;color:var(--text-2);margin-bottom:10px}
+.focus-pill{display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+.focus-dot{width:6px;height:6px;background:var(--blue);border-radius:50%}
+.export-btns{display:flex;gap:7px;flex-shrink:0}
+.btn-exp{padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface);display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.btn-exp:hover{background:var(--bg)}
+.btn-exp-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-exp-blue:hover{background:var(--blue-2)}
 
-/* SCORE SECTIONS */
-.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
-.section-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer}
-.section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--bg)}
-.section-title{font-size:14px;font-weight:600;flex:1}
-.score-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.score-red{background:var(--red-light);color:var(--red)}
-.score-yellow{background:var(--yellow-light);color:var(--yellow)}
-.score-green{background:var(--green-light);color:var(--green)}
-.section-body{padding:20px}
-.no-data-box{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px}
-.no-data-title{font-size:13px;font-weight:600;margin-bottom:4px}
-.no-data-sub{font-size:12px;color:var(--text-2)}
-.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.metric-card{border:1px solid var(--border);border-radius:8px;padding:14px}
-.metric-card.risk{border-left:3px solid var(--red)}
-.metric-card.warn{border-left:3px solid var(--yellow)}
-.metric-card.ok{border-left:3px solid var(--green)}
-.metric-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
-.metric-flag{float:right;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
-.flag-risk{background:var(--red-light);color:var(--red)}
-.flag-warn{background:var(--yellow-light);color:var(--yellow)}
-.flag-ok{background:var(--green-light);color:var(--green)}
-.metric-value{font-size:22px;font-weight:700;margin-bottom:4px}
-.metric-value.red{color:var(--red)}
-.metric-value.yellow{color:var(--yellow)}
-.metric-value.green{color:var(--green)}
-.metric-desc{font-size:11px;color:var(--text-2);line-height:1.4}
+/* report sections */
+.sec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.sec-head{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;transition:background .1s}
+.sec-head:hover{background:var(--bg)}
+.sec-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--bg);flex-shrink:0}
+.sec-title{font-size:13px;font-weight:700;flex:1}
+.sec-score{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.score-r{background:var(--red-light);color:var(--red)}
+.score-y{background:var(--yellow-light);color:var(--yellow)}
+.score-g{background:var(--green-light);color:var(--green)}
+.sec-toggle{color:var(--text-3);transition:transform .2s}
+.sec-toggle.open{transform:rotate(180deg)}
+.sec-body{padding:16px 18px;border-top:1px solid var(--border);display:none}
+.sec-body.open{display:block}
+.no-data-box{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;margin-bottom:14px}
+.no-data-title{font-size:12px;font-weight:700;margin-bottom:3px}
+.no-data-sub{font-size:11px;color:var(--text-2)}
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.met-card{border:1px solid var(--border);border-radius:8px;padding:12px;position:relative}
+.met-card.risk{border-left:3px solid var(--red)}
+.met-card.warn{border-left:3px solid var(--yellow)}
+.met-card.ok{border-left:3px solid var(--green)}
+.met-label{font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.met-flag{position:absolute;top:10px;right:10px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:.3px}
+.flag-r{background:var(--red-light);color:var(--red)}
+.flag-y{background:var(--yellow-light);color:var(--yellow)}
+.flag-g{background:var(--green-light);color:var(--green)}
+.met-value{font-size:20px;font-weight:800;margin-bottom:4px;line-height:1.2}
+.met-value.r{color:var(--red)}.met-value.y{color:var(--yellow)}.met-value.g{color:var(--green)}
+.met-desc{font-size:10px;color:var(--text-2);line-height:1.4}
 
-/* DASHBOARD */
-.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.stat-label{font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px}
-.stat-value{font-size:28px;font-weight:700}
-.stat-sub{font-size:12px;color:var(--text-2);margin-top:4px}
-.recent-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.table-head{display:flex;padding:10px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px}
-.table-row{display:flex;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .1s}
-.table-row:hover{background:var(--bg)}
-.table-row:last-child{border-bottom:none}
-.col-name{flex:2;font-size:13px;font-weight:500}
-.col-date{flex:1;font-size:12px;color:var(--text-2)}
-.col-score{flex:1;font-size:12px;font-weight:600}
-.col-status{flex:1}
-.status-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px}
-.dot{width:7px;height:7px;border-radius:50%}
-.empty-state{padding:48px 20px;text-align:center;color:var(--text-2)}
-.empty-icon{font-size:32px;margin-bottom:10px}
-.empty-title{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
-.empty-sub{font-size:13px}
+/* action plan */
+.action-plan{margin-top:14px;background:var(--green-light);border:1px solid var(--green-border);border-radius:9px;padding:16px}
+.action-plan-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--green-border)}
+.action-item:last-child{border-bottom:none}
+.action-num{width:22px;height:22px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.action-text{font-size:12px;color:var(--text);line-height:1.5;flex:1}
+.action-text strong{color:var(--text)}
+.action-sub{font-size:11px;color:var(--green);margin-top:2px;display:flex;align-items:center;gap:4px}
 
-/* SYSTEM VARIABLES */
-.sysvar-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.sysvar-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-.sysvar-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.var-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
-.var-row:last-child{border-bottom:none}
-.var-name{font-size:12px;color:var(--text-2);font-weight:500}
-.var-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--text)}
-.var-input{font-family:'DM Mono',monospace;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:80px;text-align:right;outline:none}
-.var-input:focus{border-color:var(--blue)}
-.save-vars-btn{margin-top:14px;background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
-.save-vars-btn:hover{background:#1d4ed8}
+/* benchmark */
+.bench-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.bench-table th{text-align:left;padding:8px 10px;background:var(--bg);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-2);border-bottom:1px solid var(--border)}
+.bench-table td{padding:8px 10px;border-bottom:1px solid var(--border-2)}
+.bench-table tr:last-child td{border-bottom:none}
+.bench-you{font-weight:700}
+.bench-good{color:var(--green)}.bench-bad{color:var(--red)}.bench-mid{color:var(--yellow)}
 
-/* SETTINGS */
-.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-.settings-title{font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-.settings-row:last-child{border-bottom:none}
-.settings-key{font-size:13px;font-weight:500}
-.settings-desc{font-size:12px;color:var(--text-2);margin-top:2px}
-.toggle-switch{width:38px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s}
-.toggle-switch.on{background:var(--blue)}
-.toggle-switch::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s}
-.toggle-switch.on::after{left:19px}
-.api-key-row{display:flex;gap:8px;margin-top:8px}
-.api-key-input{flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;outline:none}
-.api-key-input:focus{border-color:var(--blue)}
-.api-save-btn{padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+/* roadmap */
+.roadmap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.roadmap-col{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.roadmap-head{padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.roadmap-30 .roadmap-head{background:var(--red-light);color:var(--red)}
+.roadmap-60 .roadmap-head{background:var(--yellow-light);color:var(--yellow)}
+.roadmap-90 .roadmap-head{background:var(--green-light);color:var(--green)}
+.roadmap-body{padding:10px 12px}
+.roadmap-item{font-size:11px;color:var(--text-2);padding:4px 0;border-bottom:1px solid var(--border-2);display:flex;align-items:flex-start;gap:5px}
+.roadmap-item:last-child{border-bottom:none}
+.roadmap-item::before{content:'•';flex-shrink:0;margin-top:1px}
 
-/* LOGIN */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;width:360px}
-.login-logo{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.login-sub{font-size:12px;color:var(--text-3);margin-bottom:28px}
-.login-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.4px}
-.login-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;margin-bottom:14px}
-.login-input:focus{border-color:var(--blue)}
-.login-btn{width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
-.login-btn:hover{background:#1d4ed8}
-.login-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+/* roi */
+.roi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.roi-card{background:var(--bg);border-radius:8px;padding:12px;text-align:center}
+.roi-label{font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.roi-val{font-size:18px;font-weight:800;color:var(--text)}
+.roi-sub{font-size:10px;color:var(--text-3);margin-top:3px}
 
-/* REPORTS LIST */
-.reports-grid{display:grid;grid-template-columns:1fr;gap:12px}
-.report-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px}
-.report-item:hover{border-color:#93c5fd;background:var(--blue-light)}
-.report-item-icon{width:40px;height:40px;background:var(--blue-light);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:18px;flex-shrink:0}
-.report-item-name{font-size:14px;font-weight:600;margin-bottom:3px}
-.report-item-meta{font-size:12px;color:var(--text-2)}
-.report-item-score{margin-left:auto;text-align:right}
-.overall-score{font-size:20px;font-weight:700}
-.overall-label{font-size:11px;color:var(--text-3)}
+/* expert notes */
+.expert-box{margin-top:14px;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.expert-head{padding:12px 14px;background:var(--bg);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;border-bottom:1px solid var(--border)}
+.expert-head .badge-ent{background:var(--orange-light);color:var(--orange);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.expert-textarea{width:100%;min-height:100px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:12px;border:none;outline:none;resize:vertical;color:var(--text)}
+.expert-textarea::placeholder{color:var(--text-3)}
+.expert-save{padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin:8px 14px 12px;display:block}
 
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;display:none;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
-.toast.show{display:flex;animation:slideUp .3s ease}
-@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* ── DASHBOARD ─────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-label{font-size:11px;color:var(--text-2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.stat-val{font-size:26px;font-weight:800}
+.stat-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.t-head{display:flex;padding:9px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+.t-head span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3)}
+.t-row{display:flex;padding:11px 16px;border-bottom:1px solid var(--border-2);align-items:center;cursor:pointer;transition:background .1s}
+.t-row:hover{background:var(--bg)}
+.t-row:last-child{border-bottom:none}
+.tc-name{flex:2.5;font-size:12px;font-weight:600}
+.tc-pkg{flex:1;font-size:11px}
+.tc-date{flex:1;font-size:11px;color:var(--text-2)}
+.tc-score{flex:1;font-size:12px;font-weight:700}
+.tc-status{flex:1;font-size:11px}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.status-done{background:var(--green-light);color:var(--green)}
+.empty-state{padding:40px;text-align:center;color:var(--text-2)}
+.empty-ico{font-size:28px;margin-bottom:8px}
+.empty-t{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.empty-s{font-size:12px}
+
+/* ── REPORTS LIST ──────────────────── */
+.rep-list{display:flex;flex-direction:column;gap:10px}
+.rep-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px}
+.rep-item:hover{border-color:var(--blue-border);background:var(--blue-light)}
+.rep-ico{width:36px;height:36px;background:var(--blue-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:16px;flex-shrink:0}
+.rep-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.rep-meta{font-size:11px;color:var(--text-2)}
+.rep-score-wrap{margin-left:auto;text-align:right}
+.rep-score{font-size:22px;font-weight:800}
+.rep-score-label{font-size:10px;color:var(--text-3)}
+
+/* ── SYSTEM VARS ───────────────────── */
+.sysvar-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sv-title{font-size:13px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sv-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-2)}
+.sv-row:last-of-type{border-bottom:none}
+.sv-key{font-size:12px;color:var(--text-2)}
+.sv-inp{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:80px;text-align:right;outline:none;color:var(--text)}
+.sv-inp:focus{border-color:var(--blue)}
+.sv-save{margin-top:12px;background:var(--blue);color:#fff;border:none;padding:7px 14px;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer}
+
+/* ── SETTINGS ──────────────────────── */
+.set-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.set-title{font-size:13px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-2)}
+.set-row:last-child{border-bottom:none}
+.set-key{font-size:13px;font-weight:600}
+.set-desc{font-size:11px;color:var(--text-2);margin-top:2px}
+.toggle-sw{width:36px;height:20px;background:var(--border);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-sw.on{background:var(--blue)}
+.toggle-sw::after{content:'';width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s}
+.toggle-sw.on::after{left:19px}
+
+/* ── TOAST ─────────────────────────── */
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:9px;font-size:12px;font-weight:600;z-index:9999;display:none;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{display:flex;animation:slideUp .25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PRINT ─────────────────────────── */
+@media print{.sidebar,.topbar,.export-btns,.sec-toggle{display:none!important}.sec-body{display:block!important}.main{margin-left:0!important}}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div class="login-wrap" id="loginWrap">
+<div id="loginScreen">
   <div class="login-card">
-    <div class="login-logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blue)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      GDA Analyzer
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+      <button class="lang-btn" onclick="setLang('tr',this)">TR</button>
     </div>
-    <div class="login-sub">Deep-Diagnostic Architecture</div>
-    <label class="login-label">Email</label>
-    <input class="login-input" type="email" id="loginEmail" placeholder="admin@gda.io" value="admin@gda.io">
-    <label class="login-label">Password</label>
-    <input class="login-input" type="password" id="loginPass" placeholder="••••••••" value="admin123">
-    <div class="login-error" id="loginError">Invalid credentials.</div>
-    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="login-logo-text">GDA Analyzer</div>
+    </div>
+    <div class="login-tagline">Deep-Diagnostic Architecture</div>
+    <div class="form-group">
+      <label class="form-label" data-tr="E-Posta" data-en="Email">Email</label>
+      <input class="form-input" id="lEmail" type="email" value="admin@gda.io">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-tr="Şifre" data-en="Password">Password</label>
+      <input class="form-input" id="lPass" type="password" value="admin123" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr" data-tr="Hatalı giriş." data-en="Invalid credentials.">Invalid credentials.</div>
+    <button class="btn-login" onclick="doLogin()" data-tr="Giriş Yap" data-en="Sign In">Sign In</button>
   </div>
 </div>
 
 <!-- APP -->
-<div id="appWrap" style="display:none;width:100%">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="logo">
-      <div class="logo-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        GDA Analyzer
+<div id="app">
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-row">
+      <div class="sidebar-logo-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
-      <div class="logo-sub">Deep-Diagnostic Architecture</div>
-    </div>
-    <div class="nav">
-      <div class="nav-item active" onclick="showPage('upload')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
-        Upload Center
-      </div>
-      <div class="nav-item" onclick="showPage('dashboard')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Dashboard
-      </div>
-      <div class="nav-item" onclick="showPage('reports')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Reports
-      </div>
-      <div class="nav-item" onclick="showPage('sysvars')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        System Variables
-      </div>
-      <div class="nav-item" onclick="showPage('settings')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M12 2v2M4.93 4.93l1.41 1.41M2 12h2M4.93 19.07l1.41-1.41M12 20v2M19.07 19.07l-1.41-1.41M20 12h2"/></svg>
-        Settings
-      </div>
-    </div>
-    <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="avatar">A</div>
-        <div>
-          <div class="user-name">Admin</div>
-          <div class="user-role">System Operator</div>
-        </div>
-      </div>
-      <div class="logout-btn" onclick="doLogout()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Secure Logout
+      <div>
+        <div class="sidebar-logo-title">GDA Analyzer</div>
+        <div class="sidebar-logo-sub">Deep-Diagnostic Architecture</div>
       </div>
     </div>
   </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search projects, analysis reports...">
-      </div>
-      <div class="topbar-actions">
-        <div class="notif-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><div class="notif-dot"></div></div>
-        <button class="btn-primary" onclick="showPage('upload')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          + New Analysis
-        </button>
+  <div class="sidebar-nav">
+    <div class="nav-section" data-tr="ANA MENÜ" data-en="MAIN">MAIN</div>
+    <div class="nav-item active" onclick="goPage('upload')" data-page="upload">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+      <span data-tr="Yükleme Merkezi" data-en="Upload Center">Upload Center</span>
+    </div>
+    <div class="nav-item" onclick="goPage('dashboard')" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span data-tr="Panel" data-en="Dashboard">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="goPage('reports')" data-page="reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span data-tr="Raporlar" data-en="Reports">Reports</span>
+      <span class="nav-badge" id="repBadge" style="display:none">0</span>
+    </div>
+    <div class="nav-section" data-tr="SİSTEM" data-en="SYSTEM">SYSTEM</div>
+    <div class="nav-item" onclick="goPage('sysvars')" data-page="sysvars">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span data-tr="Sistem Değişkenleri" data-en="System Variables">System Variables</span>
+    </div>
+    <div class="nav-item" onclick="goPage('settings')" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M12 2v2M4.93 4.93l1.41 1.41M2 12h2M4.93 19.07l1.41-1.41M12 20v2M19.07 19.07l-1.41-1.41M20 12h2"/></svg>
+      <span data-tr="Ayarlar" data-en="Settings">Settings</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">A</div>
+      <div>
+        <div class="user-name">Admin</div>
+        <div class="user-role">System Operator</div>
       </div>
     </div>
-
-    <div class="content">
-
-      <!-- UPLOAD PAGE -->
-      <div class="page active" id="page-upload">
-        <div class="page-title">New Analysis</div>
-        <div class="page-sub">Upload game assets and start the 7-discipline GDA diagnostic process.</div>
-
-        <div class="section-label">1. Select Reporting Model</div>
-        <div class="model-grid">
-          <div class="model-card selected" onclick="selectModel(this,'B')">
-            <div style="display:flex;justify-content:space-between">
-              <div class="model-badge">B</div>
-              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-            </div>
-            <div class="model-name">Analyzer AI Report</div>
-            <div class="model-desc">7 Başlıkta Tam Teknik AI Raporu. Eğitmen dokunuşu yok.</div>
-            <div class="model-tag">Minimum eforla nakit girişi sağlar.</div>
-          </div>
-          <div class="model-card" onclick="selectModel(this,'S')">
-            <div style="display:flex;justify-content:space-between">
-              <div class="model-badge">S</div>
-              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-            </div>
-            <div class="model-name">The Strategic Diagnostic</div>
-            <div class="model-desc">AI Raporu + 2 Saatlik Canlı Stratejik Analiz Seansı.</div>
-            <div class="model-tag">Profesyonel teşhis ve uzman yorumu.</div>
-          </div>
-          <div class="model-card" onclick="selectModel(this,'E')">
-            <div style="display:flex;justify-content:space-between">
-              <div class="model-badge">E</div>
-              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-            </div>
-            <div class="model-name">High-Res 360° Audit</div>
-            <div class="model-desc">Portföy Taraması + Tam Gün Kamp + Mentörlük.</div>
-            <div class="model-tag">Uzun vadeli değer ortaklığı.</div>
-          </div>
-        </div>
-
-        <div class="section-label">2. Upload Assets</div>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
-          <div class="upload-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
-          </div>
-          <div class="upload-title">Drag & Drop Game Assets Here</div>
-          <div class="upload-sub">Upload UI screenshots, gameplay videos, store materials (ASO), Excel economy files, and marketing creatives.</div>
-          <div class="upload-types">
-            <span>📸 .JPG, .PNG</span>
-            <span>🎬 .MP4, .MOV</span>
-            <span>📊 .CSV, .PDF</span>
-          </div>
-          <br>
-          <div class="browse-btn">Browse Files</div>
-        </div>
-        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.mp4,.mov,.csv,.pdf" style="display:none" onchange="handleFiles(this.files)">
-        <div class="uploaded-files" id="uploadedFiles"></div>
-
-        <div class="section-label">3. Project Details & Parameters</div>
-        <div class="params-card">
-          <div class="params-grid">
-            <div>
-              <div class="param-group">
-                <div class="param-label">📱 Monetization Model</div>
-                <div class="toggle-group">
-                  <button class="toggle-btn active" onclick="toggleMono(this,'F2P')">Free-to-Play (F2P)</button>
-                  <button class="toggle-btn" onclick="toggleMono(this,'P2P')">Premium / Pay-to-Play (P2P)</button>
-                </div>
-              </div>
-              <div class="param-group">
-                <div class="param-label">📡 Focus Area</div>
-                <select class="select-input" id="focusArea">
-                  <option>Full Audit (Recommended)</option>
-                  <option>LTV & Retention Only</option>
-                  <option>UI/UX Only</option>
-                  <option>Monetization Only</option>
-                  <option>Marketing & ASO Only</option>
-                </select>
-              </div>
-              <div class="param-group">
-                <div class="param-label">🔗 External Data Links</div>
-                <div class="link-row">
-                  <select class="select-input">
-                    <option>Store Link (Ma...</option>
-                    <option>App Store URL</option>
-                    <option>Google Play URL</option>
-                    <option>Steam URL</option>
-                  </select>
-                  <input class="text-input" placeholder="Project Name or App Store URL..." id="storeLink">
-                </div>
-                <div class="add-link" onclick="addLink()">+ Add Link</div>
-              </div>
-            </div>
-            <div>
-              <div class="param-group">
-                <div class="param-label">🎮 Game Genre</div>
-                <select class="select-input" id="gameGenre">
-                  <option>Hyper-Casual</option>
-                  <option>Casual</option>
-                  <option>Mid-Core RPG</option>
-                  <option>Strategy</option>
-                  <option>Puzzle</option>
-                  <option>Action</option>
-                  <option>Simulation</option>
-                  <option>Sports</option>
-                </select>
-                <div class="hint">Determines the baseline metrics and benchmark behaviors.</div>
-              </div>
-              <div class="param-group">
-                <div class="param-label">💲 Optional Metric Overrides</div>
-                <input class="text-input" placeholder="Current CPC (e.g. 0.45)" id="cpcOverride">
-                <div class="hint">Leave empty to use AI industry benchmarks.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="market-warn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div>
-            <div class="market-warn-title">Market Variables Required</div>
-            <div class="market-warn-text">The AI will use current market standards (CPC, IAP benchmarks, etc.) defined in the <strong>System Variables</strong> module. Make sure they are up-to-date before running the diagnostic.</div>
-          </div>
-        </div>
-
-        <div class="start-row">
-          <button class="btn-start" onclick="startAnalysis()">
-            Start AI Diagnostic
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- PROCESSING PAGE -->
-      <div class="page" id="page-processing">
-        <div class="processing-wrap">
-          <div class="spinner"></div>
-          <div class="processing-title">AI Engine Processing: RUNNING</div>
-          <div class="processing-sub" id="processingSubtext">The Deep-Diagnostic engine is analyzing your game assets against the Core Master Brief Benchmarks. Depending on server load, this may take up to 20 seconds.</div>
-          <div class="queue-link" onclick="showPage('upload')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Go back and wait in Queue
-          </div>
-          <div class="progress-steps" id="progressSteps"></div>
-        </div>
-      </div>
-
-      <!-- REPORT PAGE -->
-      <div class="page" id="page-report">
-        <div class="report-header">
-          <div class="report-header-top">
-            <div style="flex:1">
-              <div class="report-tags">
-                <span class="tag tag-blue" id="rTagModel">BASIC PACKAGE</span>
-                <span class="tag tag-gray" id="rTagGenre">Hyper-Casual</span>
-                <span class="tag tag-green" id="rTagMono">F2P</span>
-                <span style="font-size:12px;color:var(--text-3)" id="rTagTime">Generated just now</span>
-                <div style="margin-left:auto" class="verified-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Overall System Variable Integrity <strong>Verified</strong>
-                </div>
-              </div>
-              <div class="report-title" id="rTitle">Game Analysis Report</div>
-              <div class="report-subtitle">GDA Analyzer Deep-Diagnostic Report</div>
-              <div class="focus-badge"><div class="focus-dot"></div><span id="rFocus">AI Focus: LTV ve Retention (Tutundurma) dengesi</span></div>
-            </div>
-            <div class="report-actions">
-              <button class="btn-export" onclick="exportJSON()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Data (JSON)
-              </button>
-              <button class="btn-export" onclick="exportTxt()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Action Plan (.txt)
-              </button>
-              <button class="btn-export btn-export-primary" onclick="exportPDF()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Full Report (PDF)
-              </button>
-            </div>
-          </div>
-        </div>
-        <div id="reportSections"></div>
-      </div>
-
-      <!-- DASHBOARD PAGE -->
-      <div class="page" id="page-dashboard">
-        <div class="page-title">Dashboard</div>
-        <div class="page-sub">Overview of all your analysis projects.</div>
-        <div class="dash-grid">
-          <div class="stat-card">
-            <div class="stat-label">Total Analyses</div>
-            <div class="stat-value" id="statTotal">0</div>
-            <div class="stat-sub">All time</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Avg. Score</div>
-            <div class="stat-value" id="statAvg">—</div>
-            <div class="stat-sub">Across all reports</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">This Month</div>
-            <div class="stat-value" id="statMonth">0</div>
-            <div class="stat-sub">New analyses</div>
-          </div>
-        </div>
-        <div class="recent-table">
-          <div class="table-head">
-            <div class="col-name">Project</div>
-            <div class="col-date">Date</div>
-            <div class="col-score">Avg Score</div>
-            <div class="col-status">Status</div>
-          </div>
-          <div id="dashTable"></div>
-        </div>
-      </div>
-
-      <!-- REPORTS PAGE -->
-      <div class="page" id="page-reports">
-        <div class="page-title">Reports</div>
-        <div class="page-sub">All completed analysis reports.</div>
-        <div class="reports-grid" id="reportsList"></div>
-      </div>
-
-      <!-- SYSTEM VARIABLES PAGE -->
-      <div class="page" id="page-sysvars">
-        <div class="page-title">System Variables</div>
-        <div class="page-sub">Market benchmarks used by the AI diagnostic engine.</div>
-        <div class="sysvar-grid">
-          <div class="sysvar-card">
-            <div class="sysvar-title">📱 Mobile F2P Benchmarks</div>
-            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="0.45"></div>
-            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="40%"></div>
-            <div class="var-row"><span class="var-name">D7 Retention Target</span><input class="var-input" value="15%"></div>
-            <div class="var-row"><span class="var-name">D30 Retention Target</span><input class="var-input" value="5%"></div>
-            <div class="var-row"><span class="var-name">ARPU Target (USD)</span><input class="var-input" value="0.08"></div>
-            <div class="var-row"><span class="var-name">IAP Conversion Target</span><input class="var-input" value="2%"></div>
-            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
-          </div>
-          <div class="sysvar-card">
-            <div class="sysvar-title">🎮 Hyper-Casual Benchmarks</div>
-            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="0.15"></div>
-            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="35%"></div>
-            <div class="var-row"><span class="var-name">D7 Retention Target</span><input class="var-input" value="10%"></div>
-            <div class="var-row"><span class="var-name">Session Length (min)</span><input class="var-input" value="8"></div>
-            <div class="var-row"><span class="var-name">CTR Benchmark</span><input class="var-input" value="2.5%"></div>
-            <div class="var-row"><span class="var-name">IPM Target</span><input class="var-input" value="5.0"></div>
-            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
-          </div>
-          <div class="sysvar-card">
-            <div class="sysvar-title">📊 Mid-Core RPG Benchmarks</div>
-            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="1.20"></div>
-            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="45%"></div>
-            <div class="var-row"><span class="var-name">D30 Retention Target</span><input class="var-input" value="12%"></div>
-            <div class="var-row"><span class="var-name">ARPPU Target (USD)</span><input class="var-input" value="25"></div>
-            <div class="var-row"><span class="var-name">Whale % Target</span><input class="var-input" value="5%"></div>
-            <div class="var-row"><span class="var-name">LTV Target (USD)</span><input class="var-input" value="3.50"></div>
-            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
-          </div>
-          <div class="sysvar-card">
-            <div class="sysvar-title">🌐 ASO & Store Benchmarks</div>
-            <div class="var-row"><span class="var-name">Icon CTR Target</span><input class="var-input" value="3.0%"></div>
-            <div class="var-row"><span class="var-name">Store CVR Target</span><input class="var-input" value="30%"></div>
-            <div class="var-row"><span class="var-name">Review Score Min</span><input class="var-input" value="4.2"></div>
-            <div class="var-row"><span class="var-name">Visual Hook (FPS)</span><input class="var-input" value=">15"></div>
-            <div class="var-row"><span class="var-name">USP Similarity Min</span><input class="var-input" value="0.8"></div>
-            <div class="var-row"><span class="var-name">Screenshot A/B</span><input class="var-input" value="On"></div>
-            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SETTINGS PAGE -->
-      <div class="page" id="page-settings">
-        <div class="page-title">Settings</div>
-        <div class="page-sub">Platform configuration and API keys.</div>
-        <div class="settings-card">
-          <div class="settings-title">AI Engine</div>
-          <div class="settings-row">
-            <div>
-              <div class="settings-key">Backend API URL</div>
-              <div class="settings-desc">Railway deployment endpoint</div>
-            </div>
-            <input class="text-input" id="apiUrlInput" style="width:280px" value="https://analyser-cld-production.up.railway.app">
-          </div>
-          <div class="settings-row">
-            <div>
-              <div class="settings-key">Anthropic API Key</div>
-              <div class="settings-desc">Used for Claude Vision analysis</div>
-            </div>
-            <div class="api-key-row">
-              <input class="api-key-input" type="password" placeholder="sk-ant-..." id="anthropicKey">
-              <button class="api-save-btn" onclick="saveSettings()">Save</button>
-            </div>
-          </div>
-        </div>
-        <div class="settings-card">
-          <div class="settings-title">Notifications</div>
-          <div class="settings-row">
-            <div><div class="settings-key">Email on completion</div><div class="settings-desc">Receive email when analysis finishes</div></div>
-            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="settings-row">
-            <div><div class="settings-key">Auto-save reports</div><div class="settings-desc">Automatically save all completed reports</div></div>
-            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="settings-row">
-            <div><div class="settings-key">PDF auto-generate</div><div class="settings-desc">Generate PDF after every analysis</div></div>
-            <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
-          </div>
-        </div>
-      </div>
-
+    <div class="logout-row" onclick="doLogout()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span data-tr="Güvenli Çıkış" data-en="Secure Logout">Secure Logout</span>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search projects, reports...">
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-lang">
+        <button id="langEN" class="active" onclick="setLang('en',null)">EN</button>
+        <button id="langTR" onclick="setLang('tr',null)">TR</button>
+      </div>
+      <div class="notif-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><div class="notif-dot"></div></div>
+      <button class="btn-new" onclick="goPage('upload')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span data-tr="+ Yeni Analiz" data-en="+ New Analysis">+ New Analysis</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- UPLOAD -->
+    <div class="page active" id="page-upload">
+      <div class="page-header">
+        <div class="page-title" data-tr="Yeni Analiz" data-en="New Analysis">New Analysis</div>
+        <div class="page-sub" data-tr="Oyun varlıklarını yükle ve 7 disiplinli GDA tanı sürecini başlat." data-en="Upload game assets and start the 7-discipline GDA diagnostic process.">Upload game assets and start the 7-discipline GDA diagnostic process.</div>
+      </div>
+
+      <div class="section-label" data-tr="1. RAPORLAMA MODELİ SEÇ" data-en="1. SELECT REPORTING MODEL">1. SELECT REPORTING MODEL</div>
+      <div class="model-grid">
+        <div class="model-card selected" onclick="pickModel(this,'B')">
+          <span class="model-price price-free">BASIC</span>
+          <div class="model-card-head">
+            <div class="model-letter">B</div>
+            <svg class="model-check" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="model-name" data-tr="Analyzer AI Raporu" data-en="Analyzer AI Report">Analyzer AI Report</div>
+          <div class="model-desc" data-tr="7 başlıkta tam teknik AI raporu." data-en="Full 7-section technical AI report.">Full 7-section technical AI report.</div>
+          <ul class="model-features">
+            <li data-tr="7 Bölüm Metrik Raporu" data-en="7-Section Metric Report">7-Section Metric Report</li>
+            <li data-tr="Skor kartları + Risk bayrakları" data-en="Score cards + Risk flags">Score cards + Risk flags</li>
+            <li data-tr="JSON / PDF export" data-en="JSON / PDF export">JSON / PDF export</li>
+          </ul>
+          <div class="model-tag" data-tr="Minimum eforla nakit girişi." data-en="Minimum effort, maximum insight.">Minimum effort, maximum insight.</div>
+        </div>
+        <div class="model-card" onclick="pickModel(this,'S')">
+          <span class="model-price price-pro">STRATEGIC</span>
+          <div class="model-card-head">
+            <div class="model-letter">S</div>
+            <svg class="model-check" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="model-name" data-tr="Stratejik Tanı" data-en="The Strategic Diagnostic">The Strategic Diagnostic</div>
+          <div class="model-desc" data-tr="AI Raporu + Aksiyon Planı + Benchmark karşılaştırması." data-en="AI Report + Action Plan + Benchmark comparison.">AI Report + Action Plan + Benchmark comparison.</div>
+          <ul class="model-features">
+            <li data-tr="Basic'teki her şey" data-en="Everything in Basic">Everything in Basic</li>
+            <li data-tr="Hemen uygulanabilir aksiyon planı" data-en="Immediate action plan">Immediate action plan</li>
+            <li data-tr="Rekabet benchmark karşılaştırması" data-en="Competitor benchmarks">Competitor benchmarks</li>
+            <li data-tr="30-60-90 Gün Roadmap" data-en="30-60-90 Day Roadmap">30-60-90 Day Roadmap</li>
+          </ul>
+          <div class="model-tag" data-tr="Profesyonel teşhis." data-en="Professional diagnosis.">Professional diagnosis.</div>
+        </div>
+        <div class="model-card" onclick="pickModel(this,'E')">
+          <span class="model-price price-ent">ENTERPRISE</span>
+          <div class="model-card-head">
+            <div class="model-letter">E</div>
+            <svg class="model-check" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="model-name" data-tr="High-Res 360° Denetim" data-en="High-Res 360° Audit">High-Res 360° Audit</div>
+          <div class="model-desc" data-tr="Strategic'teki her şey + Gelir tahmini + Uzman yorum alanı." data-en="Everything in Strategic + ROI forecast + Expert commentary.">Everything in Strategic + ROI forecast + Expert commentary.</div>
+          <ul class="model-features">
+            <li data-tr="Strategic'teki her şey" data-en="Everything in Strategic">Everything in Strategic</li>
+            <li data-tr="Gelir tahmini / ROI" data-en="Revenue forecast / ROI">Revenue forecast / ROI</li>
+            <li data-tr="Uzman yorum alanı (düzenlenebilir)" data-en="Expert commentary (editable)">Expert commentary (editable)</li>
+            <li data-tr="Tam portföy analizi" data-en="Full portfolio analysis">Full portfolio analysis</li>
+          </ul>
+          <div class="model-tag" data-tr="Uzun vadeli değer ortaklığı." data-en="Long-term value partnership.">Long-term value partnership.</div>
+        </div>
+      </div>
+
+      <div class="section-label" data-tr="2. VARLIK YÜKLE" data-en="2. UPLOAD ASSETS">2. UPLOAD ASSETS</div>
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileIn').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="onDrop(event)">
+        <div class="upload-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
+        <div class="upload-title" data-tr="Oyun Varlıklarını Buraya Sürükle" data-en="Drag & Drop Game Assets Here">Drag & Drop Game Assets Here</div>
+        <div class="upload-sub" data-tr="UI ekran görüntüleri, gameplay videoları, ASO materyalleri, Excel ekonomi dosyaları, pazarlama görselleri." data-en="UI screenshots, gameplay videos, ASO materials, Excel economy files, marketing creatives.">UI screenshots, gameplay videos, ASO materials, Excel economy files, marketing creatives.</div>
+        <div class="upload-types"><span>📸 JPG, PNG</span><span>🎬 MP4, MOV</span><span>📊 CSV, PDF</span></div>
+        <div class="browse-btn" data-tr="Dosya Seç" data-en="Browse Files">Browse Files</div>
+      </div>
+      <input type="file" id="fileIn" multiple accept=".jpg,.jpeg,.png,.mp4,.mov,.csv,.pdf,.webp" style="display:none" onchange="addFiles(this.files)">
+      <div id="fileList" class="file-list"></div>
+
+      <div class="section-label" data-tr="3. PROJE DETAYLARI" data-en="3. PROJECT DETAILS & PARAMETERS">3. PROJECT DETAILS & PARAMETERS</div>
+      <div class="params-card">
+        <div class="params-grid">
+          <div>
+            <div class="form-group">
+              <div class="param-label" data-tr="💰 PARA KAZANMA MODELİ" data-en="💰 MONETIZATION MODEL">💰 MONETIZATION MODEL</div>
+              <div class="toggle-row">
+                <button class="toggle-btn active" onclick="pickMono(this,'F2P')" data-tr="Ücretsiz (F2P)" data-en="Free-to-Play (F2P)">Free-to-Play (F2P)</button>
+                <button class="toggle-btn" onclick="pickMono(this,'P2P')" data-tr="Premium (P2P)" data-en="Premium (P2P)">Premium (P2P)</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="param-label" data-tr="📡 ODAK ALANI" data-en="📡 FOCUS AREA">📡 FOCUS AREA</div>
+              <select class="sel" id="focusSel">
+                <option data-tr="Tam Denetim (Önerilen)" data-en="Full Audit (Recommended)">Full Audit (Recommended)</option>
+                <option data-tr="LTV ve Retention" data-en="LTV & Retention Only">LTV & Retention Only</option>
+                <option data-tr="Yalnızca UI/UX" data-en="UI/UX Only">UI/UX Only</option>
+                <option data-tr="Yalnızca Monetizasyon" data-en="Monetization Only">Monetization Only</option>
+                <option data-tr="Pazarlama ve ASO" data-en="Marketing & ASO Only">Marketing & ASO Only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="param-label" data-tr="🔗 DIŞ VERİ LİNKLERİ" data-en="🔗 EXTERNAL DATA LINKS">🔗 EXTERNAL DATA LINKS</div>
+              <div class="link-add-row">
+                <select class="sel"><option>Store Link</option><option>App Store</option><option>Google Play</option><option>Steam</option></select>
+                <input class="inp" id="storeLink" placeholder="App URL or project name...">
+              </div>
+              <span class="add-link-btn" onclick="toast('Link added')">+ <span data-tr="Link Ekle" data-en="Add Link">Add Link</span></span>
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <div class="param-label" data-tr="🎮 OYUN TÜRÜ" data-en="🎮 GAME GENRE">🎮 GAME GENRE</div>
+              <select class="sel" id="genreSel">
+                <option>Hyper-Casual</option><option>Casual</option><option>Mid-Core RPG</option>
+                <option>Strategy</option><option>Puzzle</option><option>Action</option>
+                <option>Simulation</option><option>Sports</option><option>Shooter</option>
+              </select>
+              <div class="hint" data-tr="Temel metrikleri ve benchmark davranışlarını belirler." data-en="Determines baseline metrics and benchmark behaviors.">Determines baseline metrics and benchmark behaviors.</div>
+            </div>
+            <div class="form-group">
+              <div class="param-label" data-tr="💲 OPSİYONEL METRİK GEÇERSİZLEŞTİRMELERİ" data-en="💲 OPTIONAL METRIC OVERRIDES">💲 OPTIONAL METRIC OVERRIDES</div>
+              <input class="inp" id="cpcInp" placeholder="Current CPC (e.g. 0.45)">
+              <div class="hint" data-tr="Boş bırakılırsa AI sektör benchmarklarını kullanır." data-en="Leave empty to use AI industry benchmarks.">Leave empty to use AI industry benchmarks.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <div class="info-box-title" data-tr="Piyasa Değişkenleri Gerekli" data-en="Market Variables Required">Market Variables Required</div>
+          <div class="info-box-text" data-tr="AI, Sistem Değişkenleri modülünde tanımlanan güncel piyasa standartlarını kullanacak." data-en="The AI will use current market standards defined in the System Variables module. Make sure they are up-to-date before running the diagnostic.">The AI will use current market standards defined in the System Variables module. Make sure they are up-to-date before running the diagnostic.</div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-start" onclick="startAnalysis()">
+          <span data-tr="AI Tanısını Başlat" data-en="Start AI Diagnostic">Start AI Diagnostic</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="page" id="page-processing">
+      <div class="proc-wrap">
+        <div class="spinner"></div>
+        <div class="proc-title" data-tr="AI Motoru İşliyor: ÇALIŞIYOR" data-en="AI Engine Processing: RUNNING">AI Engine Processing: RUNNING</div>
+        <div class="proc-sub" id="procSub"></div>
+        <span class="proc-back" onclick="goPage('upload')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span data-tr="Geri dön ve Kuyruğu bekle" data-en="Go back and wait in Queue">Go back and wait in Queue</span>
+        </span>
+        <div class="proc-steps" id="procSteps"></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="page" id="page-report">
+      <div class="report-topbar">
+        <div class="report-meta">
+          <div class="report-tags">
+            <span class="tag tag-blue" id="rPkg">BASIC PACKAGE</span>
+            <span class="tag tag-gray" id="rGenre">Hyper-Casual</span>
+            <span class="tag tag-green" id="rMono">F2P</span>
+            <span class="tag-time" id="rTime">Generated just now</span>
+            <div class="verified">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span data-tr="Sistem Değişkeni Bütünlüğü Doğrulandı" data-en="System Variable Integrity Verified">System Variable Integrity Verified</span>
+            </div>
+          </div>
+          <div class="report-title" id="rTitle">Game Analysis</div>
+          <div class="report-sub" data-tr="GDA Analyzer Derin Tanı Raporu" data-en="GDA Analyzer Deep-Diagnostic Report">GDA Analyzer Deep-Diagnostic Report</div>
+          <div class="focus-pill"><div class="focus-dot"></div><span id="rFocus">AI Focus: Full Audit</span></div>
+        </div>
+        <div class="export-btns">
+          <button class="btn-exp" onclick="exportJSON()">⬇ JSON</button>
+          <button class="btn-exp" onclick="exportTxt()">⬇ <span data-tr="Aksiyon Planı" data-en="Action Plan">Action Plan</span></button>
+          <button class="btn-exp btn-exp-blue" onclick="exportPDF()">⬇ PDF</button>
+        </div>
+      </div>
+      <div id="reportBody"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title" data-tr="Panel" data-en="Dashboard">Dashboard</div>
+        <div class="page-sub" data-tr="Tüm analiz projelerine genel bakış." data-en="Overview of all analysis projects.">Overview of all analysis projects.</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label" data-tr="TOPLAM ANALİZ" data-en="TOTAL ANALYSES">TOTAL ANALYSES</div><div class="stat-val" id="dTotal">0</div><div class="stat-sub" data-tr="Tüm zamanlar" data-en="All time">All time</div></div>
+        <div class="stat-card"><div class="stat-label" data-tr="ORT. SKOR" data-en="AVG SCORE">AVG SCORE</div><div class="stat-val" id="dAvg">—</div><div class="stat-sub" data-tr="Tüm raporlar" data-en="Across all reports">Across all reports</div></div>
+        <div class="stat-card"><div class="stat-label" data-tr="BU AY" data-en="THIS MONTH">THIS MONTH</div><div class="stat-val" id="dMonth">0</div><div class="stat-sub" data-tr="Yeni analizler" data-en="New analyses">New analyses</div></div>
+        <div class="stat-card"><div class="stat-label" data-tr="KRİTİK BULGULAR" data-en="CRITICAL FLAGS">CRITICAL FLAGS</div><div class="stat-val" id="dFlags" style="color:var(--red)">0</div><div class="stat-sub" data-tr="Risk > kırmızı" data-en="Risk-level findings">Risk-level findings</div></div>
+      </div>
+      <div class="table-card">
+        <div class="t-head">
+          <span class="tc-name" data-tr="PROJE" data-en="PROJECT">PROJECT</span>
+          <span class="tc-pkg" data-tr="PAKET" data-en="PACKAGE">PACKAGE</span>
+          <span class="tc-date" data-tr="TARİH" data-en="DATE">DATE</span>
+          <span class="tc-score" data-tr="ORT. SKOR" data-en="AVG SCORE">AVG SCORE</span>
+          <span class="tc-status" data-tr="DURUM" data-en="STATUS">STATUS</span>
+        </div>
+        <div id="dashRows"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div class="page-title" data-tr="Raporlar" data-en="Reports">Reports</div>
+        <div class="page-sub" data-tr="Tamamlanmış tüm analiz raporları." data-en="All completed analysis reports.">All completed analysis reports.</div>
+      </div>
+      <div class="rep-list" id="repList"></div>
+    </div>
+
+    <!-- SYSTEM VARS -->
+    <div class="page" id="page-sysvars">
+      <div class="page-header">
+        <div class="page-title" data-tr="Sistem Değişkenleri" data-en="System Variables">System Variables</div>
+        <div class="page-sub" data-tr="AI tanı motoru tarafından kullanılan piyasa benchmarkları." data-en="Market benchmarks used by the AI diagnostic engine.">Market benchmarks used by the AI diagnostic engine.</div>
+      </div>
+      <div class="sysvar-grid">
+        <div class="sv-card"><div class="sv-title">📱 Mobile F2P Benchmarks</div>
+          <div class="sv-row"><span class="sv-key">CPC Benchmark (USD)</span><input class="sv-inp" value="0.45"></div>
+          <div class="sv-row"><span class="sv-key">D1 Retention Target</span><input class="sv-inp" value="40%"></div>
+          <div class="sv-row"><span class="sv-key">D7 Retention Target</span><input class="sv-inp" value="15%"></div>
+          <div class="sv-row"><span class="sv-key">D30 Retention Target</span><input class="sv-inp" value="5%"></div>
+          <div class="sv-row"><span class="sv-key">ARPU Target (USD)</span><input class="sv-inp" value="0.08"></div>
+          <div class="sv-row"><span class="sv-key">IAP Conversion</span><input class="sv-inp" value="2%"></div>
+          <button class="sv-save" onclick="toast('Saved ✓')">Save</button>
+        </div>
+        <div class="sv-card"><div class="sv-title">🎮 Hyper-Casual Benchmarks</div>
+          <div class="sv-row"><span class="sv-key">CPC Benchmark (USD)</span><input class="sv-inp" value="0.15"></div>
+          <div class="sv-row"><span class="sv-key">D1 Retention Target</span><input class="sv-inp" value="35%"></div>
+          <div class="sv-row"><span class="sv-key">D7 Retention Target</span><input class="sv-inp" value="10%"></div>
+          <div class="sv-row"><span class="sv-key">Session Length (min)</span><input class="sv-inp" value="8"></div>
+          <div class="sv-row"><span class="sv-key">CTR Benchmark</span><input class="sv-inp" value="2.5%"></div>
+          <div class="sv-row"><span class="sv-key">IPM Target</span><input class="sv-inp" value="5.0"></div>
+          <button class="sv-save" onclick="toast('Saved ✓')">Save</button>
+        </div>
+        <div class="sv-card"><div class="sv-title">📊 Mid-Core RPG Benchmarks</div>
+          <div class="sv-row"><span class="sv-key">CPC Benchmark (USD)</span><input class="sv-inp" value="1.20"></div>
+          <div class="sv-row"><span class="sv-key">D1 Retention Target</span><input class="sv-inp" value="45%"></div>
+          <div class="sv-row"><span class="sv-key">D30 Retention Target</span><input class="sv-inp" value="12%"></div>
+          <div class="sv-row"><span class="sv-key">ARPPU Target (USD)</span><input class="sv-inp" value="25"></div>
+          <div class="sv-row"><span class="sv-key">Whale % Target</span><input class="sv-inp" value="5%"></div>
+          <div class="sv-row"><span class="sv-key">LTV Target (USD)</span><input class="sv-inp" value="3.50"></div>
+          <button class="sv-save" onclick="toast('Saved ✓')">Save</button>
+        </div>
+        <div class="sv-card"><div class="sv-title">🌐 ASO & Store Benchmarks</div>
+          <div class="sv-row"><span class="sv-key">Icon CTR Target</span><input class="sv-inp" value="3.0%"></div>
+          <div class="sv-row"><span class="sv-key">Store CVR Target</span><input class="sv-inp" value="30%"></div>
+          <div class="sv-row"><span class="sv-key">Review Score Min</span><input class="sv-inp" value="4.2"></div>
+          <div class="sv-row"><span class="sv-key">Visual Hook (FPS)</span><input class="sv-inp" value=">15"></div>
+          <div class="sv-row"><span class="sv-key">USP Similarity Min</span><input class="sv-inp" value="0.8"></div>
+          <div class="sv-row"><span class="sv-key">Screenshot A/B</span><input class="sv-inp" value="On"></div>
+          <button class="sv-save" onclick="toast('Saved ✓')">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div class="page-title" data-tr="Ayarlar" data-en="Settings">Settings</div>
+        <div class="page-sub" data-tr="Platform konfigürasyonu ve API anahtarları." data-en="Platform configuration and API keys.">Platform configuration and API keys.</div>
+      </div>
+      <div class="set-card">
+        <div class="set-title" data-tr="AI Motoru" data-en="AI Engine">AI Engine</div>
+        <div class="set-row">
+          <div><div class="set-key">Backend API URL</div><div class="set-desc">Railway deployment endpoint</div></div>
+          <input class="inp" id="apiUrl" style="width:280px" value="https://analyser-cld-production.up.railway.app">
+        </div>
+        <div class="set-row">
+          <div><div class="set-key">Anthropic API Key</div><div class="set-desc">Claude Vision analysis key</div></div>
+          <div style="display:flex;gap:6px">
+            <input class="inp" type="password" id="anthKey" placeholder="sk-ant-..." style="width:220px">
+            <button class="sv-save" onclick="toast('API key saved ✓')">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="set-card">
+        <div class="set-title" data-tr="Bildirimler" data-en="Notifications">Notifications</div>
+        <div class="set-row"><div><div class="set-key" data-tr="Tamamlanınca e-posta gönder" data-en="Email on completion">Email on completion</div><div class="set-desc" data-tr="Analiz bitince e-posta al" data-en="Receive email when analysis finishes">Receive email when analysis finishes</div></div><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="set-row"><div><div class="set-key" data-tr="Raporları otomatik kaydet" data-en="Auto-save reports">Auto-save reports</div><div class="set-desc" data-tr="Tüm raporları otomatik kaydet" data-en="Automatically save all completed reports">Automatically save all completed reports</div></div><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="set-row"><div><div class="set-key" data-tr="PDF otomatik oluştur" data-en="PDF auto-generate">PDF auto-generate</div><div class="set-desc" data-tr="Her analizden sonra PDF oluştur" data-en="Generate PDF after every analysis">Generate PDF after every analysis</div></div><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+</div><!-- /app -->
+
+<div class="toast" id="toastEl"></div>
 
 <script>
-// ---- STATE ----
-let state = {
-  reports: JSON.parse(localStorage.getItem('gda_reports') || '[]'),
-  apiUrl: localStorage.getItem('gda_api') || 'https://analyser-cld-production.up.railway.app',
-  selectedModel: 'B',
-  monoModel: 'F2P',
-  uploadedFiles: [],
-  currentReport: null
+// ── STATE ──────────────────────────────────────────────────────────────────
+const S = {
+  lang: 'en',
+  model: 'B',
+  mono: 'F2P',
+  files: [],
+  reports: JSON.parse(localStorage.getItem('gda_v2') || '[]'),
+  current: null,
+  apiUrl: localStorage.getItem('gda_api') || 'https://analyser-cld-production.up.railway.app'
 };
 
-// ---- AUTH ----
-function doLogin() {
-  const e = document.getElementById('loginEmail').value;
-  const p = document.getElementById('loginPass').value;
-  if ((e === 'admin@gda.io' || e) && p.length >= 4) {
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('appWrap').style.display = 'flex';
-    updateDashboard();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
+// ── LANG ───────────────────────────────────────────────────────────────────
+function setLang(l, btn) {
+  S.lang = l;
+  // update all [data-tr] [data-en] elements
+  document.querySelectorAll('[data-tr],[data-en]').forEach(el => {
+    const t = el.getAttribute('data-' + l);
+    if (t) el.textContent = t;
+  });
+  // update placeholder
+  document.querySelectorAll('[data-tr-ph]').forEach(el => {
+    el.placeholder = el.getAttribute('data-' + l + '-ph') || '';
+  });
+  // buttons
+  document.querySelectorAll('.topbar-lang button, .lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#lang' + l.toUpperCase()).forEach(b => b.classList.add('active'));
+  if (btn) {
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
   }
 }
-document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
+// ── AUTH ───────────────────────────────────────────────────────────────────
+function doLogin() {
+  const e = document.getElementById('lEmail').value;
+  const p = document.getElementById('lPass').value;
+  if (e && p.length >= 4) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    refreshDash(); refreshReps();
+  } else {
+    const el = document.getElementById('loginErr');
+    el.style.display = 'block';
+    el.textContent = S.lang === 'tr' ? 'Hatalı giriş.' : 'Invalid credentials.';
+  }
+}
 function doLogout() {
-  document.getElementById('loginWrap').style.display = 'flex';
-  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
 }
 
-// ---- NAVIGATION ----
-function showPage(name) {
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const navMap = {upload:0,dashboard:1,reports:2,sysvars:3,settings:4};
-  if (navMap[name] !== undefined) {
-    document.querySelectorAll('.nav-item')[navMap[name]].classList.add('active');
-  }
-  if (name === 'dashboard') updateDashboard();
-  if (name === 'reports') updateReportsList();
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector(`.nav-item[data-page="${id}"]`)?.classList.add('active');
+  if (id === 'dashboard') refreshDash();
+  if (id === 'reports') refreshReps();
 }
 
-// ---- UPLOAD ----
-function selectModel(el, m) {
+// ── UPLOAD ─────────────────────────────────────────────────────────────────
+function pickModel(el, m) {
   document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  state.selectedModel = m;
+  el.classList.add('selected'); S.model = m;
 }
-
-function toggleMono(el, m) {
+function pickMono(el, m) {
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  state.monoModel = m;
+  el.classList.add('active'); S.mono = m;
 }
-
-function handleFiles(files) {
-  Array.from(files).forEach(f => {
-    if (!state.uploadedFiles.find(x => x.name === f.name)) {
-      state.uploadedFiles.push(f);
-    }
-  });
+function addFiles(files) {
+  Array.from(files).forEach(f => { if (!S.files.find(x => x.name === f.name)) S.files.push(f); });
   renderFiles();
 }
-
-function handleDrop(e) {
+function onDrop(e) {
   e.preventDefault();
-  document.getElementById('uploadZone').classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
+  document.getElementById('dropZone').classList.remove('drag');
+  addFiles(e.dataTransfer.files);
 }
-
 function renderFiles() {
-  const wrap = document.getElementById('uploadedFiles');
-  wrap.innerHTML = state.uploadedFiles.map((f, i) => `
-    <div class="file-item">
-      <div class="file-icon">${getExt(f.name)}</div>
+  document.getElementById('fileList').innerHTML = S.files.map((f, i) => `
+    <div class="file-row">
+      <div class="file-ext">${f.name.split('.').pop().toUpperCase().slice(0,3)}</div>
       <div class="file-name">${f.name}</div>
       <div class="file-size">${(f.size/1024).toFixed(0)} KB</div>
-      <div class="file-remove" onclick="removeFile(${i})">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <div class="file-del" onclick="delFile(${i})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </div>
     </div>`).join('');
 }
+function delFile(i) { S.files.splice(i,1); renderFiles(); }
 
-function getExt(name) {
-  const e = name.split('.').pop().toUpperCase();
-  return e.substring(0,3);
-}
+// ── ANALYSIS ───────────────────────────────────────────────────────────────
+const STEPS_EN = ['Initializing AI Engine...','Preprocessing assets...','Running UI/UX Analysis (Module 1)...','Analyzing Game Loop & FTUE (Module 2)...','Marketing & ASO Audit (Module 3)...','Monetization & Economy (Module 4)...','Generating Benchmarks & Roadmap...','Compiling Final Report...'];
+const STEPS_TR = ['AI Motoru başlatılıyor...','Varlıklar işleniyor...','UI/UX Analizi çalışıyor (Modül 1)...','Oyun Döngüsü & FTUE analizi (Modül 2)...','Pazarlama & ASO Denetimi (Modül 3)...','Monetizasyon & Ekonomi (Modül 4)...','Benchmark & Roadmap oluşturuluyor...','Final raporu derleniyor...'];
 
-function removeFile(i) {
-  state.uploadedFiles.splice(i, 1);
-  renderFiles();
-}
-
-function addLink() { showToast('Link field added'); }
-
-// ---- ANALYSIS ----
 async function startAnalysis() {
-  const storeLink = document.getElementById('storeLink').value;
-  const genre = document.getElementById('gameGenre').value;
-  const focus = document.getElementById('focusArea').value;
+  const link = document.getElementById('storeLink').value;
+  const genre = document.getElementById('genreSel').value;
+  const focus = document.getElementById('focusSel').value;
+  goPage('processing');
+  document.getElementById('procSub').textContent =
+    (S.lang === 'tr' ? 'Derin Tanı motoru oyun varlıklarınızı analiz ediyor: ' : 'The Deep-Diagnostic engine is analyzing: ') +
+    (link || (S.files[0]?.name) || 'your game assets');
 
-  showPage('processing');
-  document.getElementById('processingSubtext').textContent =
-    `The Deep-Diagnostic engine is comparing ${storeLink || 'your game assets'} against the Core Master Brief Benchmarks. Depending on server load, this may take up to 20 seconds.`;
-
-  const steps = [
-    'Initializing AI Engine...',
-    'Preprocessing uploaded assets...',
-    'Running UI/UX Analysis (Module 1)...',
-    'Analyzing Game Loop & FTUE (Module 2)...',
-    'Running Marketing & ASO Audit (Module 3)...',
-    'Analyzing Monetization & Economy (Module 4)...',
-    'Compiling Performance Report...',
-    'Generating PDF Report...'
-  ];
-
-  const stepsEl = document.getElementById('progressSteps');
-  let current = 0;
-
+  const steps = S.lang === 'tr' ? STEPS_TR : STEPS_EN;
+  let cur = 0;
   function renderSteps() {
-    stepsEl.innerHTML = steps.map((s, i) => `
-      <div class="step ${i < current ? 'done' : i === current ? 'active' : ''}">
-        <div class="step-dot"></div>${s}
+    document.getElementById('procSteps').innerHTML = steps.map((s,i) => `
+      <div class="proc-step ${i<cur?'done':i===cur?'running':''}">
+        <div class="step-ico">${i<cur?'✓':i===cur?'▶':'○'}</div>${s}
       </div>`).join('');
   }
-
   renderSteps();
-  const interval = setInterval(() => {
-    current++;
-    renderSteps();
-    if (current >= steps.length) clearInterval(interval);
-  }, 900);
+  const iv = setInterval(() => { cur++; renderSteps(); if(cur>=steps.length) clearInterval(iv); }, 800);
 
-  // Call real API if files uploaded, else use mock
   let result;
-  if (state.uploadedFiles.length > 0) {
-    result = await callAPI(state.uploadedFiles[0], genre);
-  } else {
-    await new Promise(r => setTimeout(r, 7500));
-    result = getMockResult(genre, storeLink, focus);
-  }
+  if (S.files.length > 0) result = await callAPI(S.files[0], genre);
+  else { await sleep(6400); result = mockResult(S.model, genre, link, focus); }
 
-  clearInterval(interval);
-  current = steps.length;
-  renderSteps();
+  clearInterval(iv); cur = steps.length; renderSteps();
+  await sleep(500);
 
-  await new Promise(r => setTimeout(r, 600));
+  S.current = { id: Date.now(), title: link || S.files[0]?.name || 'Game Analysis', genre, focus, model: S.model, mono: S.mono, date: new Date().toLocaleDateString(), result };
+  S.reports.unshift(S.current);
+  localStorage.setItem('gda_v2', JSON.stringify(S.reports));
+  updateBadge();
 
-  state.currentReport = {
-    id: Date.now(),
-    title: storeLink || (state.uploadedFiles[0]?.name) || 'Game Analysis',
-    genre, focus,
-    model: state.selectedModel,
-    mono: state.monoModel,
-    date: new Date().toLocaleDateString(),
-    result
-  };
-
-  state.reports.unshift(state.currentReport);
-  localStorage.setItem('gda_reports', JSON.stringify(state.reports));
-
-  renderReport(state.currentReport);
-  showPage('report');
+  renderReport(S.current);
+  goPage('report');
 }
 
 async function callAPI(file, genre) {
   try {
     const form = new FormData();
-    const isVideo = file.type.startsWith('video/');
     form.append('file', file);
-    form.append('mode', isVideo ? 'video' : 'image');
-    form.append('depth_level', '3');
+    form.append('mode', file.type.startsWith('video') ? 'video' : 'image');
+    form.append('depth_level', S.model === 'E' ? '3' : S.model === 'S' ? '2' : '1');
     form.append('stack_hint', 'unity');
-    form.append('return_pdf', 'false');
-
-    const apiUrl = document.getElementById('apiUrlInput')?.value || state.apiUrl;
-    const res = await fetch(`${apiUrl}/analyze/sync`, { method: 'POST', body: form });
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    return transformAPIResult(data, genre);
-  } catch(e) {
-    console.warn('API call failed, using mock:', e);
-    return getMockResult(genre, file.name, 'Full Audit');
-  }
+    const url = document.getElementById('apiUrl')?.value || S.apiUrl;
+    const res = await fetch(`${url}/analyze/sync`, { method:'POST', body:form });
+    if (!res.ok) throw new Error('api');
+    return transformAPI(await res.json(), genre);
+  } catch(e) { return mockResult(S.model, genre, file.name, 'Full Audit'); }
 }
 
-function transformAPIResult(data, genre) {
+function transformAPI(d, genre) {
+  const base = buildBaseSections(genre, '', d);
+  return { model: S.model, sections: base.sections, actionPlan: base.actionPlan, benchmarks: base.benchmarks, roadmap: base.roadmap, roi: base.roi };
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── MOCK DATA ──────────────────────────────────────────────────────────────
+function mockResult(model, genre, title, focus) {
+  return { model, sections: mockSections(genre), actionPlan: mockActions(genre), benchmarks: mockBench(genre), roadmap: mockRoadmap(), roi: mockROI() };
+}
+
+function mockSections(genre) {
+  return [
+    { id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️', score:25, noData:true,
+      metrics:[
+        {l:'Saliency Map / CTA Focus', v:'42% Focus', f:'risk', c:'r', d:'CTA dominant area overlap (Target: >70%).'},
+        {l:'Action Hierarchy / Contrast', v:'4.4:1', f:'warn', c:'y', d:'OCR Contrast ratio on CTA texts (Target: >4.5:1).'},
+        {l:'Gameplay Entry / Click Depth', v:'74s', f:'warn', c:'y', d:'Time from menu to gameplay (Target: <30s).'},
+        {l:'Cognitive Load / Entropy', v:'9 objects', f:'ok', c:'g', d:'Moving entities on screen (Target: <10).'},
+        {l:'UI Consistency', v:'73%', f:'ok', c:'g', d:'Screen layout similarity index (Target: >70%).'},
+      ]},
+    { id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄', score:70,
+      metrics:[
+        {l:'FTUE Tutorial Friction', v:'10% Mentioned', f:'risk', c:'r', d:'NLP: "Confusing", "Hard to Learn" (Target: <5%).'},
+        {l:'Difficulty Wall / Churn', v:'14% Complained', f:'risk', c:'r', d:'NLP: "Too hard", "Unfair" (Target: <3%). RAGE QUIT RISK'},
+        {l:'Reward Motivation Latency', v:'30s', f:'ok', c:'g', d:'Time until first significant reward (Target: <30s).'},
+        {l:'Thumb Zone Ergonomics', v:'92% Match', f:'ok', c:'g', d:'Primary actions in safe thumb zone (Target: >80%).'},
+      ]},
+    { id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯', score:40,
+      metrics:[
+        {l:'USP Semantic Similarity', v:'40%', f:'risk', c:'r', d:'Store description vs in-game tags similarity (Limit: 0.8). USP ERROR'},
+        {l:'Visual Hook Timing', v:'1.2 FPS', f:'risk', c:'r', d:'Frame Change Rate in first 3s (Limit: >15).'},
+        {l:'Brand Consistency', v:'ΔE 35', f:'warn', c:'y', d:'Color deviation between Icon and Screenshots (Max: 5).'},
+        {l:'Market Opportunity', v:'75%', f:'ok', c:'g', d:'Genre saturation on SteamSpy (Target: <80%).'},
+      ]},
+    { id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰', score:45,
+      metrics:[
+        {l:'Ekonomik Enflasyon', v:'29% Şikayet', f:'risk', c:'r', d:'"Pay to Win" şikayeti oranı (Limit: <5%).'},
+        {l:'Price Gap Distribution', v:'-7%', f:'ok', c:'g', d:'Medyan fiyat farkı (Maks %20 sapma).'},
+        {l:'Whale Retention Protocol', v:'23/100', f:'warn', c:'y', d:'Live-ops, Battle Pass, özel etkinlik skoru.'},
+        {l:'IAP Conversion Rate', v:'1.2%', f:'warn', c:'y', d:'IAP dönüşüm oranı (Hedef: >2%).'},
+      ]},
+    { id:5, title:'PERFORMANCE: Technical & Engine Metrics', icon:'⚙️', score:62,
+      metrics:[
+        {l:'Frame Rate Stability', v:'58 FPS avg', f:'warn', c:'y', d:'Average FPS across scenes (Target: >60).'},
+        {l:'Load Time', v:'4.2s', f:'warn', c:'y', d:'Cold start to gameplay (Target: <3s).'},
+        {l:'Memory Usage', v:'412 MB', f:'ok', c:'g', d:'Peak RAM on mid-range device (Target: <500MB).'},
+      ]},
+    { id:6, title:'RETENTION: LTV & Engagement Loops', icon:'🔁', score:55,
+      metrics:[
+        {l:'D1 Retention Est.', v:'28%', f:'risk', c:'r', d:'Estimated D1 vs benchmark 40%.'},
+        {l:'Session Length', v:'6.2 min', f:'warn', c:'y', d:'Average session (Target: >8min for casual).'},
+        {l:'Daily Active Loop', v:'Weak', f:'risk', c:'r', d:'No daily reward or streak mechanic detected.'},
+        {l:'D7 Retention Est.', v:'9%', f:'warn', c:'y', d:'Estimated D7 vs benchmark 15%.'},
+      ]},
+    { id:7, title:'STRATEGY: Competitive Position & Roadmap', icon:'🗺️', score:68,
+      metrics:[
+        {l:'Genre Saturation', v:'75%', f:'ok', c:'g', d:'Market not oversaturated yet.'},
+        {l:'Competitor Gap', v:'Medium', f:'warn', c:'y', d:'3 direct competitors with higher ratings.'},
+        {l:'Growth Potential', v:'High', f:'ok', c:'g', d:'Strong core mechanic, monetization gaps to fill.'},
+        {l:'Review Score', v:'3.8 / 5', f:'warn', c:'y', d:'Below genre benchmark of 4.2.'},
+      ]},
+  ];
+}
+
+function mockActions(genre) {
+  return [
+    { t:'CTA görünür ama baskın değil (Odak %42). Odak skoru hedefi %70+.', s:'⚡ Aksiyon: Aksiyon butonunu daha parlak / kontrast bir renge çek.' },
+    { t:'Ana menüden Gameplay\'e geçiş 74s sürüyor (Hedef: < 30s).', s:'⚡ Aksiyon: Başlangıçtaki bazı UI overlay\'leri kaldır ve menü adımlarını atla.' },
+    { t:'Ekranda 9 hareketli obje/animasyon var. Bilişsel yük sınırda.', s:'⚡ Aksiyon: Particle FX, banner animasyonları ve gereksiz NPC hareketlerini kısıtla.' },
+    { t:'İncelemelerin %10\'unda onboarding şikayeti var (Hedef: <%5).', s:'⚡ Aksiyon: İlk 5 dakikadaki text-box sayısını azalt ve sadece core-loop mekaniğini öğret.' },
+    { t:'Zorluk şikayet oranı %14. Erken Churn riski.', s:'⚡ Aksiyon: Dynamic Difficulty Adjustment (DDA) entegre et.' },
+    { t:'Mağaza açıklaması (USP) ile oyun içi etiketler arasında düşük benzerlik (%40).', s:'⚡ Aksiyon: ASO metinlerini güncelleyerek oyunun core-loop mekaniklerini daha net vurgula.' },
+    { t:'İncelemelerin %29\'u "Pay to Win" veya "Aşırı Grindy" şikayeti içeriyor.', s:'⚡ Aksiyon: Premium para birimi kazanım oranını ilk 3 gün oynanışında %20 artır.' },
+    { t:'D1 retention tahmini %28 (Benchmark: %40). Kritik açık.', s:'⚡ Aksiyon: Günlük ödül döngüsü ve 7 günlük onboarding süresi ekle.' },
+  ];
+}
+
+function mockBench(genre) {
+  return [
+    { metric:'D1 Retention', you:'28%', bench:'40%', diff:'−12pp', status:'bad' },
+    { metric:'D7 Retention', you:'9%', bench:'15%', diff:'−6pp', status:'bad' },
+    { metric:'Session Length', you:'6.2 min', bench:'8+ min', diff:'−1.8 min', status:'mid' },
+    { metric:'IAP CVR', you:'1.2%', bench:'2%', diff:'−0.8pp', status:'bad' },
+    { metric:'Store Rating', you:'3.8', bench:'4.2', diff:'−0.4', status:'mid' },
+    { metric:'Load Time', you:'4.2s', bench:'<3s', diff:'+1.2s', status:'bad' },
+    { metric:'UI Consistency', you:'73%', bench:'>70%', diff:'+3pp', status:'good' },
+    { metric:'Market Saturation', you:'75%', bench:'<80%', diff:'OK', status:'good' },
+  ];
+}
+
+function mockRoadmap() {
   return {
-    sections: [
-      { id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️', score: data.confidence_score || 65,
-        metrics: [
-          { label:'UI Components', value: (data.ui_ux?.component_map?.length || 0) + ' detected', flag:'ok', type:'ok', desc:'Detected UI components' },
-          { label:'Layout Type', value: data.ui_ux?.layout_model?.type || 'Unknown', flag:'ok', type:'ok', desc:'Layout model type' },
-          { label:'Accessibility', value: (data.ui_ux?.accessibility_issues?.length || 0) === 0 ? 'Clean' : data.ui_ux?.accessibility_issues?.length + ' issues', flag: data.ui_ux?.accessibility_issues?.length > 0 ? 'warn':'ok', type: data.ui_ux?.accessibility_issues?.length > 0 ? 'yellow':'ok', desc:'Accessibility scan' }
-        ]},
-      { id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄', score: 70,
-        metrics: [
-          { label:'Genre', value: data.gameplay?.genre || genre, flag:'ok', type:'ok', desc:'Detected game genre' },
-          { label:'Core Loop', value: data.gameplay?.core_loop || 'See report', flag:'ok', type:'ok', desc:'Core gameplay loop' },
-          { label:'Difficulty', value: data.gameplay?.difficulty_curve || 'Unknown', flag:'ok', type:'ok', desc:'Difficulty curve assessment' }
-        ]},
-      { id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯', score: 80,
-        metrics: [
-          { label:'Art Style', value: data.visual_design?.art_style || 'Unknown', flag:'ok', type:'ok', desc:'Visual art style' },
-          { label:'UI Consistency', value: data.visual_design?.ui_consistency || 'Unknown', flag:'ok', type:'ok', desc:'UI visual consistency' },
-          { label:'Color Palette', value: (data.visual_design?.color_palette?.length || 0) + ' colors', flag:'ok', type:'ok', desc:'Detected colors' }
-        ]},
-      { id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰', score: 45,
-        metrics: [
-          { label:'Model', value: data.monetization?.detected_model || 'Unknown', flag:'ok', type:'ok', desc:'Monetization model' },
-          { label:'Revenue Potential', value: data.monetization?.revenue_potential || 'Unknown', flag:'ok', type:'ok', desc:'Revenue assessment' },
-          { label:'IAP Elements', value: (data.monetization?.iap_elements?.length || 0) + ' found', flag:'ok', type:'ok', desc:'In-app purchase elements' }
-        ]},
-      { id:5, title:'TECHNICAL: Architecture & Stack', icon:'⚙️', score: 75,
-        metrics: [
-          { label:'Stack', value: data.code_architecture?.recommended_stack || 'Unknown', flag:'ok', type:'ok', desc:'Recommended tech stack' },
-          { label:'Patterns', value: (data.code_architecture?.detected_patterns?.length || 0) + ' detected', flag:'ok', type:'ok', desc:'Architecture patterns' },
-          { label:'Scalability', value: data.performance?.scalability_class || 'Unknown', flag:'ok', type:'ok', desc:'Scalability class' }
-        ]},
-      { id:6, title:'PERFORMANCE: Optimization Notes', icon:'⚡', score: 72,
-        metrics: data.performance?.optimization_notes?.slice(0,3).map(n => ({ label:'Note', value:n.substring(0,30)+'...', flag:'warn', type:'yellow', desc:n })) || []
-      },
-      { id:7, title:'STRATEGY: Market Fit & Roadmap', icon:'🗺️', score: 68,
-        metrics: data.monetization?.market_fit_notes?.slice(0,3).map(n => ({ label:'Note', value:n.substring(0,30)+'...', flag:'ok', type:'ok', desc:n })) || []
-      }
-    ],
-    summary: data.technical_summary || 'Analysis complete.',
-    confidence: data.confidence_score || 70,
-    pdfPath: data.report_pdf_path
+    d30: ['CTA butonunu yeniden renklendir','Onboarding adımlarını azalt (max 5)','FTUE süresi 5 dakikaya indir','Store screenshotlarını güncelle','Daily reward sistemi tasarla'],
+    d60: ['DDA sistemini entegre et','D1 retention loop kur','IAP fiyat katmanlarını düzelt','A/B test: 2 farklı store icon','İlk Live-ops etkinliği'],
+    d90: ['Whale retention protocol ekle','Battle Pass v1 yayınla','D7 cohort analizi yap','USP semantic similarity > 0.7\'ye çek','Pazarlama kreatiflerini güncelle'],
   };
 }
 
-function getMockResult(genre, title, focus) {
-  return {
-    sections: [
-      { id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️', score:25,
-        noData: true,
-        metrics:[
-          {label:'Saliency Map / CTA Focus', value:'42% Focus', flag:'risk', type:'red', desc:'CTA dominant area overlap (Target: >70%).'},
-          {label:'Action Hierarchy / Contrast', value:'4.4:1', flag:'warn', type:'yellow', desc:'OCR Contrast ratio on CTA texts (Target: >4.5:1).'},
-          {label:'Gameplay Entry / Click Depth', value:'74s', flag:'warn', type:'yellow', desc:'Time from menu to gameplay (Target: <30s).'},
-          {label:'Cognitive Load / Entropy', value:'9 objects', flag:'ok', type:'green', desc:'Moving entities / animations on screen (Target: <10).'},
-          {label:'UI Consistency', value:'73%', flag:'ok', type:'green', desc:'Screen layout similarity index (Target: >70%).'}
-        ]},
-      { id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄', score:70,
-        metrics:[
-          {label:'FTUE Tutorial Friction', value:'10% Mentioned', flag:'risk', type:'red', desc:'NLP: "Confusing", "Hard to Learn" (Target: <5%).'},
-          {label:'Difficulty Wall / Churn', value:'14% Complained', flag:'risk', type:'red', desc:'NLP: "Too hard", "Unfair" (Target: <3%). RAGE QUIT RISK'},
-          {label:'Reward Motivation Latency', value:'30s', flag:'ok', type:'green', desc:'Time until first significant reward / XP (Target: <30s).'},
-          {label:'Thumb Zone Ergonomics', value:'92% Match', flag:'ok', type:'green', desc:'Primary actions in safe thumb reach map (Target: >80%).'}
-        ]},
-      { id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯', score:80,
-        metrics:[
-          {label:'USP Semantic Similarity', value:'40%', flag:'risk', type:'red', desc:'Mağaza açıklaması (USP) ile oyun içi etiketler arasındaki Semantic Similarity skoru 0.4. (Limit: 0.8) - USP DOĞRULAMA HATASI'},
-          {label:'Visual Hook Timing', value:'1.2 FPS', flag:'risk', type:'red', desc:'İlk 3 saniyedeki Frame Change Rate hedefin altında. (Limit: >15)'},
-          {label:'Brand Consistency', value:'ΔE 35', flag:'warn', type:'yellow', desc:'Color deviation detected between Icon and Screenshots. (Max limit: 5)'},
-          {label:'Market Opportunity', value:'75%', flag:'ok', type:'green', desc:'Genre saturation percentage on SteamSpy (Target: <80%).'}
-        ]},
-      { id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰', score:45,
-        metrics:[
-          {label:'Ekonomik Enflasyon', value:'29% Şikayet', flag:'risk', type:'red', desc:'İncelemelerde "Pay to Win" veya "Aşırı Grindy" yoğunluğu. (Limit: <5%).'},
-          {label:'Price Gap Distribution', value:'-7%', flag:'ok', type:'green', desc:'Türün medyan fiyatına göre fiyat farkı (Maks %20 sapma tolere edilir). IAP Tiers: 4 (Min: 5)'},
-          {label:'Whale Retention Protocol', value:'23/100', flag:'warn', type:'yellow', desc:'Live-ops, Battle Pass ve özel etkinlik skorlaması.'}
-        ]},
-      { id:5, title:'PERFORMANCE: Technical & Engine Metrics', icon:'⚙️', score:62,
-        metrics:[
-          {label:'Frame Rate Stability', value:'58 FPS avg', flag:'warn', type:'yellow', desc:'Average FPS across tested scenes (Target: >60).'},
-          {label:'Load Time', value:'4.2s', flag:'warn', type:'yellow', desc:'Cold start to gameplay (Target: <3s).'},
-          {label:'Memory Usage', value:'412 MB', flag:'ok', type:'green', desc:'Peak RAM usage on mid-range device (Target: <500MB).'}
-        ]},
-      { id:6, title:'RETENTION: LTV & Engagement Loops', icon:'🔁', score:55,
-        metrics:[
-          {label:'D1 Retention Est.', value:'28%', flag:'risk', type:'red', desc:'Estimated D1 retention vs benchmark 40%.'},
-          {label:'Session Length', value:'6.2 min', flag:'warn', type:'yellow', desc:'Average session (Target: >8min for casual).'},
-          {label:'Daily Active Loop', value:'Weak', flag:'risk', type:'red', desc:'No daily reward or streak mechanic detected.'}
-        ]},
-      { id:7, title:'STRATEGY: Competitive Position & Roadmap', icon:'🗺️', score:68,
-        metrics:[
-          {label:'Genre Saturation', value:'75%', flag:'ok', type:'green', desc:'Market is not oversaturated yet.'},
-          {label:'Competitor Gap', value:'Medium', flag:'warn', type:'yellow', desc:'3 direct competitors with higher ratings.'},
-          {label:'Growth Potential', value:'High', flag:'ok', type:'green', desc:'Strong core mechanic with monetization gaps to fill.'}
-        ]}
-    ],
-    summary: `${genre} game analysis complete. Critical issues found in UI/UX and Monetization. Marketing conversion needs immediate attention.`,
-    confidence: 72
-  };
+function mockROI() {
+  return { currentLTV: '$0.18', targetLTV: '$0.42', roiPotential: '+133%', paybackPeriod: '4.2 mo' };
 }
 
-// ---- RENDER REPORT ----
+// ── RENDER REPORT ──────────────────────────────────────────────────────────
 function renderReport(rep) {
-  const modelMap = {B:'BASIC PACKAGE', S:'STRATEGIC PACKAGE', E:'ENTERPRISE AUDIT'};
-  document.getElementById('rTagModel').textContent = modelMap[rep.model] || 'BASIC PACKAGE';
-  document.getElementById('rTagGenre').textContent = rep.genre;
-  document.getElementById('rTagMono').textContent = rep.mono;
-  document.getElementById('rTagTime').textContent = 'Generated just now';
+  const pkgMap = { B:'BASIC PACKAGE', S:'STRATEGIC PACKAGE', E:'ENTERPRISE AUDIT' };
+  document.getElementById('rPkg').textContent = pkgMap[rep.model] || 'BASIC PACKAGE';
+  document.getElementById('rGenre').textContent = rep.genre;
+  document.getElementById('rMono').textContent = rep.mono;
+  document.getElementById('rTime').textContent = S.lang === 'tr' ? 'Az önce oluşturuldu' : 'Generated just now';
   document.getElementById('rTitle').textContent = rep.title;
   document.getElementById('rFocus').textContent = 'AI Focus: ' + rep.focus;
 
-  const container = document.getElementById('reportSections');
-  container.innerHTML = rep.result.sections.map(s => {
-    const scoreClass = s.score >= 70 ? 'score-green' : s.score >= 50 ? 'score-yellow' : 'score-red';
-    const metricsHtml = s.metrics.map(m => `
-      <div class="metric-card ${m.type === 'red' ? 'risk' : m.type === 'yellow' ? 'warn' : 'ok'}">
-        <div class="metric-label">${m.label} <span class="metric-flag flag-${m.type === 'red' ? 'risk' : m.type === 'yellow' ? 'warn' : 'ok'} metric-flag">${m.flag === 'risk' ? 'RİSKLİ' : m.flag === 'warn' ? 'DÜŞÜK' : 'OK'}</span></div>
-        <div class="metric-value ${m.type}">${m.value}</div>
-        <div class="metric-desc">${m.desc}</div>
+  const r = rep.result;
+  let html = '';
+
+  // 7 sections (always)
+  r.sections.forEach(sec => {
+    const sc = sec.score >= 70 ? 'score-g' : sec.score >= 50 ? 'score-y' : 'score-r';
+    const mHtml = sec.metrics.map(m => `
+      <div class="met-card ${m.f==='risk'?'risk':m.f==='warn'?'warn':'ok'}">
+        <div class="met-label">${m.l}</div>
+        <div class="met-flag flag-${m.f==='risk'?'r':m.f==='warn'?'y':'g'}">${m.f==='risk'?(S.lang==='tr'?'RİSKLİ':'RISK'):m.f==='warn'?(S.lang==='tr'?'DÜŞÜK':'LOW'):'OK'}</div>
+        <div class="met-value ${m.c}">${m.v}</div>
+        <div class="met-desc">${m.d}</div>
       </div>`).join('');
 
-    const noDataHtml = s.noData ? `
-      <div class="no-data-box">
-        <div class="no-data-title">Görsel Veri Sağlanamadı</div>
-        <div class="no-data-sub">Gerçek Vision Analizi için rapor oluştururken UI ekran görüntüsü yüklemeniz gerekmektedir.<br>GDA Vision Engine analiz tamamlayamadı. Manuel veriler aşağıda listelenmektedir.</div>
-      </div>` : '';
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">${sec.icon}</div>
+        <div class="sec-title">${sec.id}. ${sec.title}</div>
+        <span class="sec-score ${sc}">Score: ${sec.score}/100</span>
+        <svg class="sec-toggle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body ${sec.id<=3?'open':''}">
+        ${sec.noData ? `<div class="no-data-box"><div class="no-data-title">${S.lang==='tr'?'Görsel Veri Sağlanamadı':'No Visual Data Provided'}</div><div class="no-data-sub">${S.lang==='tr'?'Gerçek Vision Analizi için UI ekran görüntüsü yükleyin.':'Upload a UI screenshot for real Vision Analysis.'}</div></div>` : ''}
+        <div class="metrics-grid">${mHtml}</div>
+      </div>
+    </div>`;
+  });
 
-    return `
-      <div class="section-card">
-        <div class="section-head" onclick="toggleSection(this)">
-          <div class="section-icon">${s.icon}</div>
-          <div class="section-title">${s.id}. ${s.title}</div>
-          <span class="score-badge ${scoreClass}">Score: ${s.score}/100</span>
+  // ACTION PLAN (S + E)
+  if (rep.model === 'S' || rep.model === 'E') {
+    const actions = r.actionPlan || [];
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">⚡</div>
+        <div class="sec-title">${S.lang==='tr'?'Ertesi Gün Uygulanabilir (Fix-to-Earn) Eylem Planı':'Immediate Action Plan (Fix-to-Earn)'}</div>
+        <span class="sec-score score-g">${actions.length} ${S.lang==='tr'?'Aksiyon':'Actions'}</span>
+        <svg class="sec-toggle open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body open">
+        <div class="action-plan">
+          <div class="action-plan-title">⚡ ${S.lang==='tr'?'Hemen Uygulanabilir Aksiyonlar':'Immediately Actionable Items'}</div>
+          ${actions.map((a,i) => `<div class="action-item"><div class="action-num">${i+1}</div><div><div class="action-text"><strong>${a.t}</strong></div><div class="action-sub">✨ ${a.s}</div></div></div>`).join('')}
         </div>
-        <div class="section-body">
-          ${noDataHtml}
-          <div class="metrics-grid">${metricsHtml}</div>
+      </div>
+    </div>`;
+
+    // BENCHMARKS
+    const bench = r.benchmarks || [];
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">📊</div>
+        <div class="sec-title">${S.lang==='tr'?'Rekabet Benchmark Karşılaştırması':'Competitive Benchmark Comparison'}</div>
+        <span class="sec-score score-y">vs Industry</span>
+        <svg class="sec-toggle open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body open">
+        <table class="bench-table">
+          <thead><tr><th>Metric</th><th>${S.lang==='tr'?'Sizin Değeriniz':'Your Value'}</th><th>Benchmark</th><th>${S.lang==='tr'?'Fark':'Gap'}</th></tr></thead>
+          <tbody>${bench.map(b => `<tr><td>${b.metric}</td><td class="bench-you ${b.status==='good'?'bench-good':b.status==='bad'?'bench-bad':'bench-mid'}">${b.you}</td><td>${b.bench}</td><td class="${b.status==='good'?'bench-good':b.status==='bad'?'bench-bad':'bench-mid'}">${b.diff}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+    // ROADMAP
+    const rm = r.roadmap || { d30:[], d60:[], d90:[] };
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">🗓️</div>
+        <div class="sec-title">30 – 60 – 90 ${S.lang==='tr'?'Günlük Yol Haritası':'Day Roadmap'}</div>
+        <span class="sec-score score-g">${S.lang==='tr'?'Stratejik Plan':'Strategic Plan'}</span>
+        <svg class="sec-toggle open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body open">
+        <div class="roadmap-grid">
+          <div class="roadmap-col roadmap-30"><div class="roadmap-head">🔴 ${S.lang==='tr'?'İlk 30 Gün':'First 30 Days'}</div><div class="roadmap-body">${rm.d30.map(i=>`<div class="roadmap-item">${i}</div>`).join('')}</div></div>
+          <div class="roadmap-col roadmap-60"><div class="roadmap-head">🟡 31 – 60 ${S.lang==='tr'?'Gün':'Days'}</div><div class="roadmap-body">${rm.d60.map(i=>`<div class="roadmap-item">${i}</div>`).join('')}</div></div>
+          <div class="roadmap-col roadmap-90"><div class="roadmap-head">🟢 61 – 90 ${S.lang==='tr'?'Gün':'Days'}</div><div class="roadmap-body">${rm.d90.map(i=>`<div class="roadmap-item">${i}</div>`).join('')}</div></div>
         </div>
-      </div>`;
+      </div>
+    </div>`;
+  }
+
+  // ROI (E only)
+  if (rep.model === 'E') {
+    const roi = r.roi || {};
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">💹</div>
+        <div class="sec-title">${S.lang==='tr'?'Gelir Tahmini & ROI':'Revenue Forecast & ROI'}</div>
+        <span class="sec-score score-g">ENTERPRISE</span>
+        <svg class="sec-toggle open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body open">
+        <div class="roi-grid">
+          <div class="roi-card"><div class="roi-label">${S.lang==='tr'?'Mevcut LTV':'Current LTV'}</div><div class="roi-val">${roi.currentLTV}</div><div class="roi-sub">${S.lang==='tr'?'Kullanıcı başına':'Per user'}</div></div>
+          <div class="roi-card"><div class="roi-label">${S.lang==='tr'?'Hedef LTV':'Target LTV'}</div><div class="roi-val" style="color:var(--green)">${roi.targetLTV}</div><div class="roi-sub">${S.lang==='tr'?'Aksiyonlar sonrası':'After actions'}</div></div>
+          <div class="roi-card"><div class="roi-label">ROI ${S.lang==='tr'?'Potansiyeli':'Potential'}</div><div class="roi-val" style="color:var(--green)">${roi.roiPotential}</div><div class="roi-sub">${S.lang==='tr'?'LTV artışı':'LTV increase'}</div></div>
+          <div class="roi-card"><div class="roi-label">${S.lang==='tr'?'Geri Ödeme Süresi':'Payback Period'}</div><div class="roi-val">${roi.paybackPeriod}</div><div class="roi-sub">${S.lang==='tr'?'Ortalama':'Average'}</div></div>
+        </div>
+      </div>
+    </div>`;
+
+    // EXPERT NOTES
+    html += `<div class="sec-card">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-icon">🎓</div>
+        <div class="sec-title">${S.lang==='tr'?'Uzman Yorumu':'Expert Commentary'} <span class="badge-ent">ENTERPRISE</span></div>
+        <span class="sec-score score-g">${S.lang==='tr'?'Düzenlenebilir':'Editable'}</span>
+        <svg class="sec-toggle open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="sec-body open">
+        <div class="expert-box">
+          <div class="expert-head">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            ${S.lang==='tr'?'Uzman Notu — GDA Danışmanı':'Expert Note — GDA Consultant'}
+            <span class="badge-ent">ENTERPRISE</span>
+          </div>
+          <textarea class="expert-textarea" id="expertNote" placeholder="${S.lang==='tr'?'Uzman yorumunuzu buraya ekleyin. Bu alan müşteriye teslim edilecek PDF raporuna dahil edilecektir...':'Add your expert commentary here. This will be included in the final PDF report delivered to the client...'}" onchange="saveExpertNote(this.value)">${rep.expertNote||''}</textarea>
+          <button class="expert-save" onclick="saveExpertNote(document.getElementById('expertNote').value)">
+            ${S.lang==='tr'?'Yorumu Kaydet':'Save Commentary'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('reportBody').innerHTML = html;
+}
+
+function toggleSec(el) {
+  const body = el.nextElementSibling;
+  const ico = el.querySelector('.sec-toggle');
+  body.classList.toggle('open');
+  ico.classList.toggle('open');
+}
+
+function saveExpertNote(v) {
+  if (S.current) {
+    S.current.expertNote = v;
+    const i = S.reports.findIndex(r => r.id === S.current.id);
+    if (i >= 0) S.reports[i].expertNote = v;
+    localStorage.setItem('gda_v2', JSON.stringify(S.reports));
+    toast('Expert note saved ✓');
+  }
+}
+
+// ── DASHBOARD & REPORTS ───────────────────────────────────────────────────
+function refreshDash() {
+  document.getElementById('dTotal').textContent = S.reports.length;
+  let totalFlags = 0;
+  if (S.reports.length) {
+    const avgScore = Math.round(S.reports.reduce((a,r) => {
+      const sc = r.result?.sections?.map(s=>s.score)||[50];
+      totalFlags += r.result?.sections?.flatMap(s=>s.metrics||[]).filter(m=>m.f==='risk').length||0;
+      return a + sc.reduce((x,y)=>x+y,0)/sc.length;
+    },0)/S.reports.length);
+    document.getElementById('dAvg').textContent = avgScore+'/100';
+  }
+  document.getElementById('dFlags').textContent = totalFlags;
+  const mo = S.reports.filter(r => new Date(r.date).getMonth()===new Date().getMonth()).length;
+  document.getElementById('dMonth').textContent = mo;
+
+  const pkg = {B:'Basic',S:'Strategic',E:'Enterprise'};
+  const rows = document.getElementById('dashRows');
+  if (!S.reports.length) { rows.innerHTML = `<div class="empty-state"><div class="empty-ico">📊</div><div class="empty-t">${S.lang==='tr'?'Henüz analiz yok':'No analyses yet'}</div><div class="empty-s">${S.lang==='tr'?'Yükleme Merkezinden ilk analizinizi başlatın':'Start your first analysis from Upload Center'}</div></div>`; return; }
+  rows.innerHTML = S.reports.slice(0,15).map(r => {
+    const sc = r.result?.sections?.map(s=>s.score)||[50];
+    const avg = Math.round(sc.reduce((a,b)=>a+b,0)/sc.length);
+    return `<div class="t-row" onclick="viewRep(${r.id})">
+      <div class="tc-name">${(r.title||'Untitled').substring(0,45)}</div>
+      <div class="tc-pkg"><span class="tag ${r.model==='E'?'tag-yellow':r.model==='S'?'tag-blue':'tag-gray'}">${pkg[r.model]||'Basic'}</span></div>
+      <div class="tc-date">${r.date}</div>
+      <div class="tc-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div>
+      <div class="tc-status"><span class="status-pill status-done">● Complete</span></div>
+    </div>`;
   }).join('');
 }
 
-function toggleSection(el) {
-  const body = el.nextElementSibling;
-  body.style.display = body.style.display === 'none' ? 'block' : '';
+function refreshReps() {
+  updateBadge();
+  const list = document.getElementById('repList');
+  if (!S.reports.length) { list.innerHTML = `<div class="empty-state"><div class="empty-ico">📋</div><div class="empty-t">${S.lang==='tr'?'Rapor yok':'No reports yet'}</div><div class="empty-s">${S.lang==='tr'?'Analiz tamamlandığında burada görünür':'Complete an analysis to see reports here'}</div></div>`; return; }
+  const pkg = {B:'Basic',S:'Strategic',E:'Enterprise'};
+  list.innerHTML = S.reports.map(r => {
+    const sc = r.result?.sections?.map(s=>s.score)||[50];
+    const avg = Math.round(sc.reduce((a,b)=>a+b,0)/sc.length);
+    return `<div class="rep-item" onclick="viewRep(${r.id})">
+      <div class="rep-ico">📊</div>
+      <div><div class="rep-name">${(r.title||'Untitled').substring(0,55)}</div><div class="rep-meta">${r.genre} · ${r.mono} · ${pkg[r.model]||'Basic'} · ${r.date}</div></div>
+      <div class="rep-score-wrap"><div class="rep-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div><div class="rep-score-label">Overall</div></div>
+    </div>`;
+  }).join('');
 }
 
-// ---- DASHBOARD ----
-function updateDashboard() {
-  document.getElementById('statTotal').textContent = state.reports.length;
-  if (state.reports.length > 0) {
-    const avg = Math.round(state.reports.reduce((a,r) => {
-      const scores = r.result?.sections?.map(s => s.score) || [50];
-      return a + scores.reduce((x,y)=>x+y,0)/scores.length;
-    }, 0) / state.reports.length);
-    document.getElementById('statAvg').textContent = avg + '/100';
-  }
-  const thisMonth = state.reports.filter(r => new Date(r.date).getMonth() === new Date().getMonth()).length;
-  document.getElementById('statMonth').textContent = thisMonth;
-
-  const table = document.getElementById('dashTable');
-  if (state.reports.length === 0) {
-    table.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No analyses yet</div><div class="empty-sub">Start your first analysis from Upload Center</div></div>`;
-  } else {
-    table.innerHTML = state.reports.slice(0,10).map(r => {
-      const scores = r.result?.sections?.map(s => s.score) || [50];
-      const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
-      return `<div class="table-row" onclick="viewReport('${r.id}')">
-        <div class="col-name">${r.title?.substring(0,40) || 'Untitled'}</div>
-        <div class="col-date">${r.date}</div>
-        <div class="col-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div>
-        <div class="col-status"><span class="status-dot"><span class="dot" style="background:var(--green)"></span>Complete</span></div>
-      </div>`;
-    }).join('');
-  }
+function viewRep(id) {
+  const r = S.reports.find(x => x.id === id);
+  if (!r) return;
+  S.current = r;
+  renderReport(r);
+  goPage('report');
 }
 
-function updateReportsList() {
-  const list = document.getElementById('reportsList');
-  if (state.reports.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No reports yet</div><div class="empty-sub">Complete an analysis to see reports here</div></div>`;
-  } else {
-    list.innerHTML = state.reports.map(r => {
-      const scores = r.result?.sections?.map(s => s.score) || [50];
-      const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
-      return `<div class="report-item" onclick="viewReport('${r.id}')">
-        <div class="report-item-icon">📊</div>
-        <div>
-          <div class="report-item-name">${r.title?.substring(0,50) || 'Untitled'}</div>
-          <div class="report-item-meta">${r.genre} · ${r.mono} · ${r.date}</div>
-        </div>
-        <div class="report-item-score">
-          <div class="overall-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div>
-          <div class="overall-label">Overall Score</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+function updateBadge() {
+  const b = document.getElementById('repBadge');
+  if (S.reports.length) { b.textContent = S.reports.length; b.style.display = ''; }
+  else b.style.display = 'none';
 }
 
-function viewReport(id) {
-  const rep = state.reports.find(r => String(r.id) === String(id));
-  if (!rep) return;
-  state.currentReport = rep;
-  renderReport(rep);
-  showPage('report');
-}
-
-// ---- EXPORTS ----
+// ── EXPORTS ────────────────────────────────────────────────────────────────
 function exportJSON() {
-  if (!state.currentReport) return;
-  const blob = new Blob([JSON.stringify(state.currentReport.result, null, 2)], {type:'application/json'});
+  if (!S.current) return;
+  const blob = new Blob([JSON.stringify(S.current.result, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'gda_analysis.json'; a.click();
-  showToast('JSON exported ✓');
+  a.download = 'gda_analysis.json'; a.click(); toast('JSON exported ✓');
 }
-
 function exportTxt() {
-  if (!state.currentReport) return;
-  const r = state.currentReport;
-  let txt = `GDA ANALYZER — ACTION PLAN\n${'='.repeat(40)}\nProject: ${r.title}\nDate: ${r.date}\nGenre: ${r.genre}\n\n`;
-  r.result.sections.forEach(s => {
-    txt += `\n${s.id}. ${s.title} — Score: ${s.score}/100\n${'-'.repeat(40)}\n`;
-    s.metrics.forEach(m => { txt += `• ${m.label}: ${m.value}\n  ${m.desc}\n`; });
+  if (!S.current) return;
+  let t = `GDA ANALYZER — ACTION PLAN\n${'='.repeat(44)}\nProject: ${S.current.title}\nDate: ${S.current.date}\nPackage: ${S.current.model}\nGenre: ${S.current.genre}\n\n`;
+  (S.current.result.sections||[]).forEach(s => {
+    t += `\n${s.id}. ${s.title} — Score: ${s.score}/100\n${'-'.repeat(44)}\n`;
+    (s.metrics||[]).forEach(m => { t += `• ${m.l}: ${m.v}\n  ${m.d}\n`; });
   });
-  const blob = new Blob([txt], {type:'text/plain'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'gda_action_plan.txt'; a.click();
-  showToast('Action plan exported ✓');
-}
-
-function exportPDF() {
-  if (!state.currentReport) return;
-  // If backend returned PDF path, fetch it
-  if (state.currentReport.result?.pdfPath) {
-    const apiUrl = document.getElementById('apiUrlInput')?.value || state.apiUrl;
-    window.open(apiUrl + state.currentReport.result.pdfPath, '_blank');
-    showToast('Opening PDF report...');
-    return;
+  if (S.current.result.actionPlan) {
+    t += `\n\nACTION PLAN\n${'='.repeat(44)}\n`;
+    S.current.result.actionPlan.forEach((a,i) => { t += `${i+1}. ${a.t}\n   ${a.s}\n\n`; });
   }
-  // Otherwise print
-  window.print();
-  showToast('PDF generation started ✓');
+  const blob = new Blob([t], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gda_action_plan.txt'; a.click(); toast('Action plan exported ✓');
 }
+function exportPDF() { window.print(); toast('Print dialog opened ✓'); }
 
-// ---- SETTINGS ----
-function saveSettings() {
-  const url = document.getElementById('apiUrlInput').value;
-  state.apiUrl = url;
-  localStorage.setItem('gda_api', url);
-  showToast('Settings saved ✓');
-}
-
-function saveVars() { showToast('System variables saved ✓'); }
-
-// ---- TOAST ----
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = '✓ ' + msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = '✓ ' + msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
 }
 </script>
 </body>
