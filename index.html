@@ -871,25 +871,32 @@ async function startAnalysis() {
 async function callAPI(file, genre, storeUrl) {
   try {
     const form = new FormData();
-    // Always send mode (required by API)
-    const isVideo = file && file.type.startsWith('video');
+    const isVideo = file && file.type && file.type.startsWith('video');
     form.append('mode', isVideo ? 'video' : 'image');
     form.append('depth_level', S.model === 'E' ? '3' : S.model === 'S' ? '2' : '1');
     form.append('genre', genre || 'Casual');
     form.append('mono_model', S.mono || 'F2P');
-    form.append('platform', isVideo ? 'Mobile' : 'PC');
-    if (storeUrl) form.append('store_url', storeUrl);
+    form.append('platform', 'PC');
+    if (storeUrl && storeUrl.trim()) form.append('store_url', storeUrl.trim());
     if (file) form.append('file', file);
-    const url = document.getElementById('apiUrl')?.value || S.apiUrl;
-    const res = await fetch(`${url}/analyze/sync`, { method:'POST', body:form });
+    const apiUrl = (document.getElementById('apiUrl') && document.getElementById('apiUrl').value) || 'https://analyser-cld-production.up.railway.app';
+    console.log('Calling API:', apiUrl, 'store_url:', storeUrl, 'file:', file ? file.name : 'none');
+    const res = await fetch(apiUrl + '/analyze/sync', {
+      method: 'POST',
+      body: form,
+      mode: 'cors',
+    });
+    console.log('API response status:', res.status);
     if (!res.ok) {
       const err = await res.text();
+      console.error('API error response:', err);
       throw new Error('api: ' + err);
     }
     const data = await res.json();
+    console.log('API data received:', data);
     return transformAPINew(data, genre);
   } catch(e) {
-    console.error('API error:', e);
+    console.error('API call failed:', e.message);
     return mockResult(S.model, genre, storeUrl || (file && file.name) || 'Game', 'Full Audit');
   }
 }
