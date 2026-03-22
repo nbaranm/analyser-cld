@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://v2t.local/schemas/output.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "technical_summary",
+    "confidence_score",
+    "assumptions",
+    "ui_ux",
+    "gameplay",
+    "visual_design",
+    "code_architecture",
+    "performance",
+    "monetization"
+  ],
+  "properties": {
+    "technical_summary": { "type": "string" },
+    "confidence_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "ui_ux": { "type": "object" },
+    "gameplay": { "type": "object" },
+    "visual_design": { "type": "object" },
+    "code_architecture": { "type": "object" },
+    "performance": { "type": "object" },
+    "monetization": { "type": "object" },
+    "report_pdf_path": { "type": ["string", "null"] }
+  }
+}
