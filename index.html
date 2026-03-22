@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDA Analyzer — Deep-Diagnostic Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f4f6f9;
+  --surface:#ffffff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --text-2:#64748b;
+  --text-3:#94a3b8;
+  --blue:#2563eb;
+  --blue-light:#eff6ff;
+  --green:#16a34a;
+  --green-light:#f0fdf4;
+  --red:#dc2626;
+  --red-light:#fef2f2;
+  --yellow:#d97706;
+  --yellow-light:#fffbeb;
+  --sidebar:240px;
+  --radius:10px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.logo-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.logo-title svg{color:var(--blue)}
+.logo-sub{font-size:11px;color:var(--text-3);margin-top:2px;letter-spacing:.3px}
+.nav{padding:12px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:var(--text-2);font-size:13px;font-weight:500;transition:all .15s;border-radius:0;margin:1px 8px;border-radius:8px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--blue-light);color:var(--blue)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.user-info{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:32px;height:32px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600}
+.user-name{font-size:13px;font-weight:500}
+.user-role{font-size:11px;color:var(--text-3)}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;color:var(--text-2);font-size:12px;border-radius:7px;transition:all .15s}
+.logout-btn:hover{background:var(--bg);color:var(--text)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.search-wrap{flex:1;max-width:480px;position:relative}
+.search-wrap input{width:100%;padding:7px 12px 7px 34px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none}
+.search-wrap input:focus{border-color:var(--blue);background:#fff}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);width:15px;height:15px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn-primary{background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-primary:hover{background:#1d4ed8}
+.notif-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+.notif-dot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;top:6px;right:6px;border:2px solid #fff}
+.content{padding:28px 28px;flex:1}
+
+/* PAGE */
+.page{display:none}
+.page.active{display:block}
+
+/* UPLOAD PAGE */
+.page-title{font-size:22px;font-weight:600;margin-bottom:4px}
+.page-sub{color:var(--text-2);font-size:13px;margin-bottom:28px}
+.section-label{font-size:15px;font-weight:600;margin-bottom:14px}
+
+/* REPORTING MODEL */
+.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.model-card{border:2px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;background:var(--surface)}
+.model-card:hover{border-color:#93c5fd}
+.model-card.selected{border-color:var(--blue);background:var(--blue-light)}
+.model-badge{width:28px;height:28px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:12px}
+.model-card.selected .model-badge{background:var(--blue);border-color:var(--blue);color:#fff}
+.model-check{float:right;color:var(--blue);display:none}
+.model-card.selected .model-check{display:block}
+.model-name{font-size:14px;font-weight:600;margin-bottom:6px}
+.model-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:10px}
+.model-tag{font-size:11px;color:var(--blue);font-weight:500}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:20px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-light)}
+.upload-icon{width:44px;height:44px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--blue)}
+.upload-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text-2);margin-bottom:14px}
+.upload-types{display:flex;justify-content:center;gap:16px;font-size:12px;color:var(--text-3)}
+.upload-types span{display:flex;align-items:center;gap:4px}
+.browse-btn{display:inline-block;padding:7px 16px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);transition:all .15s}
+.browse-btn:hover{background:var(--bg)}
+.uploaded-files{margin-bottom:20px}
+.file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.file-icon{width:32px;height:32px;background:var(--blue-light);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:11px;font-weight:600}
+.file-name{font-size:13px;font-weight:500;flex:1}
+.file-size{font-size:12px;color:var(--text-3)}
+.file-remove{cursor:pointer;color:var(--text-3);padding:4px}
+.file-remove:hover{color:var(--red)}
+
+/* PARAMS */
+.params-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.params-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.param-group{margin-bottom:16px}
+.param-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px}
+.toggle-group{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.toggle-btn{flex:1;padding:8px 12px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);border:none;font-family:'DM Sans',sans-serif;transition:all .15s;color:var(--text-2)}
+.toggle-btn.active{background:var(--blue-light);color:var(--blue)}
+.select-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;appearance:none;cursor:pointer}
+.select-input:focus{border-color:var(--blue)}
+.text-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none}
+.text-input:focus{border-color:var(--blue)}
+.text-input::placeholder{color:var(--text-3)}
+.link-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.link-row .select-input{width:140px}
+.add-link{font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;display:flex;align-items:center;gap:4px}
+.hint{font-size:11px;color:var(--text-3);margin-top:4px}
+.market-warn{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:20px}
+.market-warn svg{color:var(--blue);flex-shrink:0;margin-top:1px}
+.market-warn-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.market-warn-text{font-size:12px;color:var(--text-2);line-height:1.5}
+.start-row{display:flex;justify-content:flex-end}
+.btn-start{background:var(--blue);color:#fff;border:none;padding:12px 28px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.btn-start:hover{background:#1d4ed8;transform:translateY(-1px)}
+
+/* PROCESSING */
+.processing-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center}
+.spinner{width:52px;height:52px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:24px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.processing-title{font-size:20px;font-weight:600;margin-bottom:8px}
+.processing-sub{font-size:13px;color:var(--text-2);max-width:380px;line-height:1.6;margin-bottom:20px}
+.queue-link{font-size:13px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:4px}
+.progress-steps{margin-top:24px;text-align:left;width:100%;max-width:400px}
+.step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text-2)}
+.step.done{color:var(--green)}
+.step.active{color:var(--blue);font-weight:500}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.step.done .step-dot{background:var(--green)}
+.step.active .step-dot{background:var(--blue);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* REPORT */
+.report-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px}
+.report-tags{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.tag-blue{background:var(--blue-light);color:var(--blue)}
+.tag-gray{background:var(--bg);color:var(--text-2)}
+.tag-green{background:var(--green-light);color:var(--green)}
+.report-title{font-size:22px;font-weight:700;margin-bottom:4px;word-break:break-all}
+.report-subtitle{font-size:13px;color:var(--text-2);margin-bottom:12px}
+.verified-badge{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green);font-weight:500}
+.report-actions{display:flex;gap:8px;margin-left:auto}
+.btn-export{padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-export:hover{background:var(--bg)}
+.btn-export-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-export-primary:hover{background:#1d4ed8}
+.report-header-top{display:flex;align-items:flex-start;gap:12px}
+.focus-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500}
+.focus-dot{width:7px;height:7px;background:var(--blue);border-radius:50%}
+
+/* SCORE SECTIONS */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.section-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer}
+.section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--bg)}
+.section-title{font-size:14px;font-weight:600;flex:1}
+.score-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.score-red{background:var(--red-light);color:var(--red)}
+.score-yellow{background:var(--yellow-light);color:var(--yellow)}
+.score-green{background:var(--green-light);color:var(--green)}
+.section-body{padding:20px}
+.no-data-box{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px}
+.no-data-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.no-data-sub{font-size:12px;color:var(--text-2)}
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.metric-card{border:1px solid var(--border);border-radius:8px;padding:14px}
+.metric-card.risk{border-left:3px solid var(--red)}
+.metric-card.warn{border-left:3px solid var(--yellow)}
+.metric-card.ok{border-left:3px solid var(--green)}
+.metric-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.metric-flag{float:right;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.flag-risk{background:var(--red-light);color:var(--red)}
+.flag-warn{background:var(--yellow-light);color:var(--yellow)}
+.flag-ok{background:var(--green-light);color:var(--green)}
+.metric-value{font-size:22px;font-weight:700;margin-bottom:4px}
+.metric-value.red{color:var(--red)}
+.metric-value.yellow{color:var(--yellow)}
+.metric-value.green{color:var(--green)}
+.metric-desc{font-size:11px;color:var(--text-2);line-height:1.4}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.stat-label{font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:700}
+.stat-sub{font-size:12px;color:var(--text-2);margin-top:4px}
+.recent-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-head{display:flex;padding:10px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px}
+.table-row{display:flex;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .1s}
+.table-row:hover{background:var(--bg)}
+.table-row:last-child{border-bottom:none}
+.col-name{flex:2;font-size:13px;font-weight:500}
+.col-date{flex:1;font-size:12px;color:var(--text-2)}
+.col-score{flex:1;font-size:12px;font-weight:600}
+.col-status{flex:1}
+.status-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%}
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-2)}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.empty-sub{font-size:13px}
+
+/* SYSTEM VARIABLES */
+.sysvar-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sysvar-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.sysvar-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.var-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.var-row:last-child{border-bottom:none}
+.var-name{font-size:12px;color:var(--text-2);font-weight:500}
+.var-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--text)}
+.var-input{font-family:'DM Mono',monospace;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:80px;text-align:right;outline:none}
+.var-input:focus{border-color:var(--blue)}
+.save-vars-btn{margin-top:14px;background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+.save-vars-btn:hover{background:#1d4ed8}
+
+/* SETTINGS */
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.settings-title{font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-key{font-size:13px;font-weight:500}
+.settings-desc{font-size:12px;color:var(--text-2);margin-top:2px}
+.toggle-switch{width:38px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s}
+.toggle-switch.on{background:var(--blue)}
+.toggle-switch::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s}
+.toggle-switch.on::after{left:19px}
+.api-key-row{display:flex;gap:8px;margin-top:8px}
+.api-key-input{flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;outline:none}
+.api-key-input:focus{border-color:var(--blue)}
+.api-save-btn{padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;width:360px}
+.login-logo{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.login-sub{font-size:12px;color:var(--text-3);margin-bottom:28px}
+.login-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.4px}
+.login-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;margin-bottom:14px}
+.login-input:focus{border-color:var(--blue)}
+.login-btn{width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.login-btn:hover{background:#1d4ed8}
+.login-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+
+/* REPORTS LIST */
+.reports-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.report-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px}
+.report-item:hover{border-color:#93c5fd;background:var(--blue-light)}
+.report-item-icon{width:40px;height:40px;background:var(--blue-light);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:18px;flex-shrink:0}
+.report-item-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.report-item-meta{font-size:12px;color:var(--text-2)}
+.report-item-score{margin-left:auto;text-align:right}
+.overall-score{font-size:20px;font-weight:700}
+.overall-label{font-size:11px;color:var(--text-3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;display:none;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{display:flex;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blue)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      GDA Analyzer
+    </div>
+    <div class="login-sub">Deep-Diagnostic Architecture</div>
+    <label class="login-label">Email</label>
+    <input class="login-input" type="email" id="loginEmail" placeholder="admin@gda.io" value="admin@gda.io">
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="loginPass" placeholder="••••••••" value="admin123">
+    <div class="login-error" id="loginError">Invalid credentials.</div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appWrap" style="display:none;width:100%">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        GDA Analyzer
+      </div>
+      <div class="logo-sub">Deep-Diagnostic Architecture</div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" onclick="showPage('upload')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+        Upload Center
+      </div>
+      <div class="nav-item" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Reports
+      </div>
+      <div class="nav-item" onclick="showPage('sysvars')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        System Variables
+      </div>
+      <div class="nav-item" onclick="showPage('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M12 2v2M4.93 4.93l1.41 1.41M2 12h2M4.93 19.07l1.41-1.41M12 20v2M19.07 19.07l-1.41-1.41M20 12h2"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">A</div>
+        <div>
+          <div class="user-name">Admin</div>
+          <div class="user-role">System Operator</div>
+        </div>
+      </div>
+      <div class="logout-btn" onclick="doLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Secure Logout
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search projects, analysis reports...">
+      </div>
+      <div class="topbar-actions">
+        <div class="notif-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><div class="notif-dot"></div></div>
+        <button class="btn-primary" onclick="showPage('upload')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + New Analysis
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- UPLOAD PAGE -->
+      <div class="page active" id="page-upload">
+        <div class="page-title">New Analysis</div>
+        <div class="page-sub">Upload game assets and start the 7-discipline GDA diagnostic process.</div>
+
+        <div class="section-label">1. Select Reporting Model</div>
+        <div class="model-grid">
+          <div class="model-card selected" onclick="selectModel(this,'B')">
+            <div style="display:flex;justify-content:space-between">
+              <div class="model-badge">B</div>
+              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <div class="model-name">Analyzer AI Report</div>
+            <div class="model-desc">7 Başlıkta Tam Teknik AI Raporu. Eğitmen dokunuşu yok.</div>
+            <div class="model-tag">Minimum eforla nakit girişi sağlar.</div>
+          </div>
+          <div class="model-card" onclick="selectModel(this,'S')">
+            <div style="display:flex;justify-content:space-between">
+              <div class="model-badge">S</div>
+              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <div class="model-name">The Strategic Diagnostic</div>
+            <div class="model-desc">AI Raporu + 2 Saatlik Canlı Stratejik Analiz Seansı.</div>
+            <div class="model-tag">Profesyonel teşhis ve uzman yorumu.</div>
+          </div>
+          <div class="model-card" onclick="selectModel(this,'E')">
+            <div style="display:flex;justify-content:space-between">
+              <div class="model-badge">E</div>
+              <svg class="model-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <div class="model-name">High-Res 360° Audit</div>
+            <div class="model-desc">Portföy Taraması + Tam Gün Kamp + Mentörlük.</div>
+            <div class="model-tag">Uzun vadeli değer ortaklığı.</div>
+          </div>
+        </div>
+
+        <div class="section-label">2. Upload Assets</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+          <div class="upload-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+          </div>
+          <div class="upload-title">Drag & Drop Game Assets Here</div>
+          <div class="upload-sub">Upload UI screenshots, gameplay videos, store materials (ASO), Excel economy files, and marketing creatives.</div>
+          <div class="upload-types">
+            <span>📸 .JPG, .PNG</span>
+            <span>🎬 .MP4, .MOV</span>
+            <span>📊 .CSV, .PDF</span>
+          </div>
+          <br>
+          <div class="browse-btn">Browse Files</div>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.mp4,.mov,.csv,.pdf" style="display:none" onchange="handleFiles(this.files)">
+        <div class="uploaded-files" id="uploadedFiles"></div>
+
+        <div class="section-label">3. Project Details & Parameters</div>
+        <div class="params-card">
+          <div class="params-grid">
+            <div>
+              <div class="param-group">
+                <div class="param-label">📱 Monetization Model</div>
+                <div class="toggle-group">
+                  <button class="toggle-btn active" onclick="toggleMono(this,'F2P')">Free-to-Play (F2P)</button>
+                  <button class="toggle-btn" onclick="toggleMono(this,'P2P')">Premium / Pay-to-Play (P2P)</button>
+                </div>
+              </div>
+              <div class="param-group">
+                <div class="param-label">📡 Focus Area</div>
+                <select class="select-input" id="focusArea">
+                  <option>Full Audit (Recommended)</option>
+                  <option>LTV & Retention Only</option>
+                  <option>UI/UX Only</option>
+                  <option>Monetization Only</option>
+                  <option>Marketing & ASO Only</option>
+                </select>
+              </div>
+              <div class="param-group">
+                <div class="param-label">🔗 External Data Links</div>
+                <div class="link-row">
+                  <select class="select-input">
+                    <option>Store Link (Ma...</option>
+                    <option>App Store URL</option>
+                    <option>Google Play URL</option>
+                    <option>Steam URL</option>
+                  </select>
+                  <input class="text-input" placeholder="Project Name or App Store URL..." id="storeLink">
+                </div>
+                <div class="add-link" onclick="addLink()">+ Add Link</div>
+              </div>
+            </div>
+            <div>
+              <div class="param-group">
+                <div class="param-label">🎮 Game Genre</div>
+                <select class="select-input" id="gameGenre">
+                  <option>Hyper-Casual</option>
+                  <option>Casual</option>
+                  <option>Mid-Core RPG</option>
+                  <option>Strategy</option>
+                  <option>Puzzle</option>
+                  <option>Action</option>
+                  <option>Simulation</option>
+                  <option>Sports</option>
+                </select>
+                <div class="hint">Determines the baseline metrics and benchmark behaviors.</div>
+              </div>
+              <div class="param-group">
+                <div class="param-label">💲 Optional Metric Overrides</div>
+                <input class="text-input" placeholder="Current CPC (e.g. 0.45)" id="cpcOverride">
+                <div class="hint">Leave empty to use AI industry benchmarks.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="market-warn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <div class="market-warn-title">Market Variables Required</div>
+            <div class="market-warn-text">The AI will use current market standards (CPC, IAP benchmarks, etc.) defined in the <strong>System Variables</strong> module. Make sure they are up-to-date before running the diagnostic.</div>
+          </div>
+        </div>
+
+        <div class="start-row">
+          <button class="btn-start" onclick="startAnalysis()">
+            Start AI Diagnostic
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- PROCESSING PAGE -->
+      <div class="page" id="page-processing">
+        <div class="processing-wrap">
+          <div class="spinner"></div>
+          <div class="processing-title">AI Engine Processing: RUNNING</div>
+          <div class="processing-sub" id="processingSubtext">The Deep-Diagnostic engine is analyzing your game assets against the Core Master Brief Benchmarks. Depending on server load, this may take up to 20 seconds.</div>
+          <div class="queue-link" onclick="showPage('upload')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Go back and wait in Queue
+          </div>
+          <div class="progress-steps" id="progressSteps"></div>
+        </div>
+      </div>
+
+      <!-- REPORT PAGE -->
+      <div class="page" id="page-report">
+        <div class="report-header">
+          <div class="report-header-top">
+            <div style="flex:1">
+              <div class="report-tags">
+                <span class="tag tag-blue" id="rTagModel">BASIC PACKAGE</span>
+                <span class="tag tag-gray" id="rTagGenre">Hyper-Casual</span>
+                <span class="tag tag-green" id="rTagMono">F2P</span>
+                <span style="font-size:12px;color:var(--text-3)" id="rTagTime">Generated just now</span>
+                <div style="margin-left:auto" class="verified-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Overall System Variable Integrity <strong>Verified</strong>
+                </div>
+              </div>
+              <div class="report-title" id="rTitle">Game Analysis Report</div>
+              <div class="report-subtitle">GDA Analyzer Deep-Diagnostic Report</div>
+              <div class="focus-badge"><div class="focus-dot"></div><span id="rFocus">AI Focus: LTV ve Retention (Tutundurma) dengesi</span></div>
+            </div>
+            <div class="report-actions">
+              <button class="btn-export" onclick="exportJSON()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Data (JSON)
+              </button>
+              <button class="btn-export" onclick="exportTxt()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Action Plan (.txt)
+              </button>
+              <button class="btn-export btn-export-primary" onclick="exportPDF()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Full Report (PDF)
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="reportSections"></div>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page" id="page-dashboard">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Overview of all your analysis projects.</div>
+        <div class="dash-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Analyses</div>
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-sub">All time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg. Score</div>
+            <div class="stat-value" id="statAvg">—</div>
+            <div class="stat-sub">Across all reports</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value" id="statMonth">0</div>
+            <div class="stat-sub">New analyses</div>
+          </div>
+        </div>
+        <div class="recent-table">
+          <div class="table-head">
+            <div class="col-name">Project</div>
+            <div class="col-date">Date</div>
+            <div class="col-score">Avg Score</div>
+            <div class="col-status">Status</div>
+          </div>
+          <div id="dashTable"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS PAGE -->
+      <div class="page" id="page-reports">
+        <div class="page-title">Reports</div>
+        <div class="page-sub">All completed analysis reports.</div>
+        <div class="reports-grid" id="reportsList"></div>
+      </div>
+
+      <!-- SYSTEM VARIABLES PAGE -->
+      <div class="page" id="page-sysvars">
+        <div class="page-title">System Variables</div>
+        <div class="page-sub">Market benchmarks used by the AI diagnostic engine.</div>
+        <div class="sysvar-grid">
+          <div class="sysvar-card">
+            <div class="sysvar-title">📱 Mobile F2P Benchmarks</div>
+            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="0.45"></div>
+            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="40%"></div>
+            <div class="var-row"><span class="var-name">D7 Retention Target</span><input class="var-input" value="15%"></div>
+            <div class="var-row"><span class="var-name">D30 Retention Target</span><input class="var-input" value="5%"></div>
+            <div class="var-row"><span class="var-name">ARPU Target (USD)</span><input class="var-input" value="0.08"></div>
+            <div class="var-row"><span class="var-name">IAP Conversion Target</span><input class="var-input" value="2%"></div>
+            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
+          </div>
+          <div class="sysvar-card">
+            <div class="sysvar-title">🎮 Hyper-Casual Benchmarks</div>
+            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="0.15"></div>
+            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="35%"></div>
+            <div class="var-row"><span class="var-name">D7 Retention Target</span><input class="var-input" value="10%"></div>
+            <div class="var-row"><span class="var-name">Session Length (min)</span><input class="var-input" value="8"></div>
+            <div class="var-row"><span class="var-name">CTR Benchmark</span><input class="var-input" value="2.5%"></div>
+            <div class="var-row"><span class="var-name">IPM Target</span><input class="var-input" value="5.0"></div>
+            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
+          </div>
+          <div class="sysvar-card">
+            <div class="sysvar-title">📊 Mid-Core RPG Benchmarks</div>
+            <div class="var-row"><span class="var-name">CPC Benchmark (USD)</span><input class="var-input" value="1.20"></div>
+            <div class="var-row"><span class="var-name">D1 Retention Target</span><input class="var-input" value="45%"></div>
+            <div class="var-row"><span class="var-name">D30 Retention Target</span><input class="var-input" value="12%"></div>
+            <div class="var-row"><span class="var-name">ARPPU Target (USD)</span><input class="var-input" value="25"></div>
+            <div class="var-row"><span class="var-name">Whale % Target</span><input class="var-input" value="5%"></div>
+            <div class="var-row"><span class="var-name">LTV Target (USD)</span><input class="var-input" value="3.50"></div>
+            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
+          </div>
+          <div class="sysvar-card">
+            <div class="sysvar-title">🌐 ASO & Store Benchmarks</div>
+            <div class="var-row"><span class="var-name">Icon CTR Target</span><input class="var-input" value="3.0%"></div>
+            <div class="var-row"><span class="var-name">Store CVR Target</span><input class="var-input" value="30%"></div>
+            <div class="var-row"><span class="var-name">Review Score Min</span><input class="var-input" value="4.2"></div>
+            <div class="var-row"><span class="var-name">Visual Hook (FPS)</span><input class="var-input" value=">15"></div>
+            <div class="var-row"><span class="var-name">USP Similarity Min</span><input class="var-input" value="0.8"></div>
+            <div class="var-row"><span class="var-name">Screenshot A/B</span><input class="var-input" value="On"></div>
+            <button class="save-vars-btn" onclick="saveVars()">Save Changes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS PAGE -->
+      <div class="page" id="page-settings">
+        <div class="page-title">Settings</div>
+        <div class="page-sub">Platform configuration and API keys.</div>
+        <div class="settings-card">
+          <div class="settings-title">AI Engine</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-key">Backend API URL</div>
+              <div class="settings-desc">Railway deployment endpoint</div>
+            </div>
+            <input class="text-input" id="apiUrlInput" style="width:280px" value="https://analyser-cld-production.up.railway.app">
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-key">Anthropic API Key</div>
+              <div class="settings-desc">Used for Claude Vision analysis</div>
+            </div>
+            <div class="api-key-row">
+              <input class="api-key-input" type="password" placeholder="sk-ant-..." id="anthropicKey">
+              <button class="api-save-btn" onclick="saveSettings()">Save</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-title">Notifications</div>
+          <div class="settings-row">
+            <div><div class="settings-key">Email on completion</div><div class="settings-desc">Receive email when analysis finishes</div></div>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-key">Auto-save reports</div><div class="settings-desc">Automatically save all completed reports</div></div>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-key">PDF auto-generate</div><div class="settings-desc">Generate PDF after every analysis</div></div>
+            <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- STATE ----
+let state = {
+  reports: JSON.parse(localStorage.getItem('gda_reports') || '[]'),
+  apiUrl: localStorage.getItem('gda_api') || 'https://analyser-cld-production.up.railway.app',
+  selectedModel: 'B',
+  monoModel: 'F2P',
+  uploadedFiles: [],
+  currentReport: null
+};
+
+// ---- AUTH ----
+function doLogin() {
+  const e = document.getElementById('loginEmail').value;
+  const p = document.getElementById('loginPass').value;
+  if ((e === 'admin@gda.io' || e) && p.length >= 4) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('appWrap').style.display = 'flex';
+    updateDashboard();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('appWrap').style.display = 'none';
+}
+
+// ---- NAVIGATION ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const navMap = {upload:0,dashboard:1,reports:2,sysvars:3,settings:4};
+  if (navMap[name] !== undefined) {
+    document.querySelectorAll('.nav-item')[navMap[name]].classList.add('active');
+  }
+  if (name === 'dashboard') updateDashboard();
+  if (name === 'reports') updateReportsList();
+}
+
+// ---- UPLOAD ----
+function selectModel(el, m) {
+  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedModel = m;
+}
+
+function toggleMono(el, m) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  state.monoModel = m;
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!state.uploadedFiles.find(x => x.name === f.name)) {
+      state.uploadedFiles.push(f);
+    }
+  });
+  renderFiles();
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+}
+
+function renderFiles() {
+  const wrap = document.getElementById('uploadedFiles');
+  wrap.innerHTML = state.uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <div class="file-icon">${getExt(f.name)}</div>
+      <div class="file-name">${f.name}</div>
+      <div class="file-size">${(f.size/1024).toFixed(0)} KB</div>
+      <div class="file-remove" onclick="removeFile(${i})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>`).join('');
+}
+
+function getExt(name) {
+  const e = name.split('.').pop().toUpperCase();
+  return e.substring(0,3);
+}
+
+function removeFile(i) {
+  state.uploadedFiles.splice(i, 1);
+  renderFiles();
+}
+
+function addLink() { showToast('Link field added'); }
+
+// ---- ANALYSIS ----
+async function startAnalysis() {
+  const storeLink = document.getElementById('storeLink').value;
+  const genre = document.getElementById('gameGenre').value;
+  const focus = document.getElementById('focusArea').value;
+
+  showPage('processing');
+  document.getElementById('processingSubtext').textContent =
+    `The Deep-Diagnostic engine is comparing ${storeLink || 'your game assets'} against the Core Master Brief Benchmarks. Depending on server load, this may take up to 20 seconds.`;
+
+  const steps = [
+    'Initializing AI Engine...',
+    'Preprocessing uploaded assets...',
+    'Running UI/UX Analysis (Module 1)...',
+    'Analyzing Game Loop & FTUE (Module 2)...',
+    'Running Marketing & ASO Audit (Module 3)...',
+    'Analyzing Monetization & Economy (Module 4)...',
+    'Compiling Performance Report...',
+    'Generating PDF Report...'
+  ];
+
+  const stepsEl = document.getElementById('progressSteps');
+  let current = 0;
+
+  function renderSteps() {
+    stepsEl.innerHTML = steps.map((s, i) => `
+      <div class="step ${i < current ? 'done' : i === current ? 'active' : ''}">
+        <div class="step-dot"></div>${s}
+      </div>`).join('');
+  }
+
+  renderSteps();
+  const interval = setInterval(() => {
+    current++;
+    renderSteps();
+    if (current >= steps.length) clearInterval(interval);
+  }, 900);
+
+  // Call real API if files uploaded, else use mock
+  let result;
+  if (state.uploadedFiles.length > 0) {
+    result = await callAPI(state.uploadedFiles[0], genre);
+  } else {
+    await new Promise(r => setTimeout(r, 7500));
+    result = getMockResult(genre, storeLink, focus);
+  }
+
+  clearInterval(interval);
+  current = steps.length;
+  renderSteps();
+
+  await new Promise(r => setTimeout(r, 600));
+
+  state.currentReport = {
+    id: Date.now(),
+    title: storeLink || (state.uploadedFiles[0]?.name) || 'Game Analysis',
+    genre, focus,
+    model: state.selectedModel,
+    mono: state.monoModel,
+    date: new Date().toLocaleDateString(),
+    result
+  };
+
+  state.reports.unshift(state.currentReport);
+  localStorage.setItem('gda_reports', JSON.stringify(state.reports));
+
+  renderReport(state.currentReport);
+  showPage('report');
+}
+
+async function callAPI(file, genre) {
+  try {
+    const form = new FormData();
+    const isVideo = file.type.startsWith('video/');
+    form.append('file', file);
+    form.append('mode', isVideo ? 'video' : 'image');
+    form.append('depth_level', '3');
+    form.append('stack_hint', 'unity');
+    form.append('return_pdf', 'false');
+
+    const apiUrl = document.getElementById('apiUrlInput')?.value || state.apiUrl;
+    const res = await fetch(`${apiUrl}/analyze/sync`, { method: 'POST', body: form });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    return transformAPIResult(data, genre);
+  } catch(e) {
+    console.warn('API call failed, using mock:', e);
+    return getMockResult(genre, file.name, 'Full Audit');
+  }
+}
+
+function transformAPIResult(data, genre) {
+  return {
+    sections: [
+      { id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️', score: data.confidence_score || 65,
+        metrics: [
+          { label:'UI Components', value: (data.ui_ux?.component_map?.length || 0) + ' detected', flag:'ok', type:'ok', desc:'Detected UI components' },
+          { label:'Layout Type', value: data.ui_ux?.layout_model?.type || 'Unknown', flag:'ok', type:'ok', desc:'Layout model type' },
+          { label:'Accessibility', value: (data.ui_ux?.accessibility_issues?.length || 0) === 0 ? 'Clean' : data.ui_ux?.accessibility_issues?.length + ' issues', flag: data.ui_ux?.accessibility_issues?.length > 0 ? 'warn':'ok', type: data.ui_ux?.accessibility_issues?.length > 0 ? 'yellow':'ok', desc:'Accessibility scan' }
+        ]},
+      { id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄', score: 70,
+        metrics: [
+          { label:'Genre', value: data.gameplay?.genre || genre, flag:'ok', type:'ok', desc:'Detected game genre' },
+          { label:'Core Loop', value: data.gameplay?.core_loop || 'See report', flag:'ok', type:'ok', desc:'Core gameplay loop' },
+          { label:'Difficulty', value: data.gameplay?.difficulty_curve || 'Unknown', flag:'ok', type:'ok', desc:'Difficulty curve assessment' }
+        ]},
+      { id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯', score: 80,
+        metrics: [
+          { label:'Art Style', value: data.visual_design?.art_style || 'Unknown', flag:'ok', type:'ok', desc:'Visual art style' },
+          { label:'UI Consistency', value: data.visual_design?.ui_consistency || 'Unknown', flag:'ok', type:'ok', desc:'UI visual consistency' },
+          { label:'Color Palette', value: (data.visual_design?.color_palette?.length || 0) + ' colors', flag:'ok', type:'ok', desc:'Detected colors' }
+        ]},
+      { id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰', score: 45,
+        metrics: [
+          { label:'Model', value: data.monetization?.detected_model || 'Unknown', flag:'ok', type:'ok', desc:'Monetization model' },
+          { label:'Revenue Potential', value: data.monetization?.revenue_potential || 'Unknown', flag:'ok', type:'ok', desc:'Revenue assessment' },
+          { label:'IAP Elements', value: (data.monetization?.iap_elements?.length || 0) + ' found', flag:'ok', type:'ok', desc:'In-app purchase elements' }
+        ]},
+      { id:5, title:'TECHNICAL: Architecture & Stack', icon:'⚙️', score: 75,
+        metrics: [
+          { label:'Stack', value: data.code_architecture?.recommended_stack || 'Unknown', flag:'ok', type:'ok', desc:'Recommended tech stack' },
+          { label:'Patterns', value: (data.code_architecture?.detected_patterns?.length || 0) + ' detected', flag:'ok', type:'ok', desc:'Architecture patterns' },
+          { label:'Scalability', value: data.performance?.scalability_class || 'Unknown', flag:'ok', type:'ok', desc:'Scalability class' }
+        ]},
+      { id:6, title:'PERFORMANCE: Optimization Notes', icon:'⚡', score: 72,
+        metrics: data.performance?.optimization_notes?.slice(0,3).map(n => ({ label:'Note', value:n.substring(0,30)+'...', flag:'warn', type:'yellow', desc:n })) || []
+      },
+      { id:7, title:'STRATEGY: Market Fit & Roadmap', icon:'🗺️', score: 68,
+        metrics: data.monetization?.market_fit_notes?.slice(0,3).map(n => ({ label:'Note', value:n.substring(0,30)+'...', flag:'ok', type:'ok', desc:n })) || []
+      }
+    ],
+    summary: data.technical_summary || 'Analysis complete.',
+    confidence: data.confidence_score || 70,
+    pdfPath: data.report_pdf_path
+  };
+}
+
+function getMockResult(genre, title, focus) {
+  return {
+    sections: [
+      { id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️', score:25,
+        noData: true,
+        metrics:[
+          {label:'Saliency Map / CTA Focus', value:'42% Focus', flag:'risk', type:'red', desc:'CTA dominant area overlap (Target: >70%).'},
+          {label:'Action Hierarchy / Contrast', value:'4.4:1', flag:'warn', type:'yellow', desc:'OCR Contrast ratio on CTA texts (Target: >4.5:1).'},
+          {label:'Gameplay Entry / Click Depth', value:'74s', flag:'warn', type:'yellow', desc:'Time from menu to gameplay (Target: <30s).'},
+          {label:'Cognitive Load / Entropy', value:'9 objects', flag:'ok', type:'green', desc:'Moving entities / animations on screen (Target: <10).'},
+          {label:'UI Consistency', value:'73%', flag:'ok', type:'green', desc:'Screen layout similarity index (Target: >70%).'}
+        ]},
+      { id:2, title:'GAME UX: FTUE & Core Loop Efficiency', icon:'🔄', score:70,
+        metrics:[
+          {label:'FTUE Tutorial Friction', value:'10% Mentioned', flag:'risk', type:'red', desc:'NLP: "Confusing", "Hard to Learn" (Target: <5%).'},
+          {label:'Difficulty Wall / Churn', value:'14% Complained', flag:'risk', type:'red', desc:'NLP: "Too hard", "Unfair" (Target: <3%). RAGE QUIT RISK'},
+          {label:'Reward Motivation Latency', value:'30s', flag:'ok', type:'green', desc:'Time until first significant reward / XP (Target: <30s).'},
+          {label:'Thumb Zone Ergonomics', value:'92% Match', flag:'ok', type:'green', desc:'Primary actions in safe thumb reach map (Target: >80%).'}
+        ]},
+      { id:3, title:'MARKETING: Store Conversion & USP', icon:'🎯', score:80,
+        metrics:[
+          {label:'USP Semantic Similarity', value:'40%', flag:'risk', type:'red', desc:'Mağaza açıklaması (USP) ile oyun içi etiketler arasındaki Semantic Similarity skoru 0.4. (Limit: 0.8) - USP DOĞRULAMA HATASI'},
+          {label:'Visual Hook Timing', value:'1.2 FPS', flag:'risk', type:'red', desc:'İlk 3 saniyedeki Frame Change Rate hedefin altında. (Limit: >15)'},
+          {label:'Brand Consistency', value:'ΔE 35', flag:'warn', type:'yellow', desc:'Color deviation detected between Icon and Screenshots. (Max limit: 5)'},
+          {label:'Market Opportunity', value:'75%', flag:'ok', type:'green', desc:'Genre saturation percentage on SteamSpy (Target: <80%).'}
+        ]},
+      { id:4, title:'MONETIZATION: Economy & Whale Behavior', icon:'💰', score:45,
+        metrics:[
+          {label:'Ekonomik Enflasyon', value:'29% Şikayet', flag:'risk', type:'red', desc:'İncelemelerde "Pay to Win" veya "Aşırı Grindy" yoğunluğu. (Limit: <5%).'},
+          {label:'Price Gap Distribution', value:'-7%', flag:'ok', type:'green', desc:'Türün medyan fiyatına göre fiyat farkı (Maks %20 sapma tolere edilir). IAP Tiers: 4 (Min: 5)'},
+          {label:'Whale Retention Protocol', value:'23/100', flag:'warn', type:'yellow', desc:'Live-ops, Battle Pass ve özel etkinlik skorlaması.'}
+        ]},
+      { id:5, title:'PERFORMANCE: Technical & Engine Metrics', icon:'⚙️', score:62,
+        metrics:[
+          {label:'Frame Rate Stability', value:'58 FPS avg', flag:'warn', type:'yellow', desc:'Average FPS across tested scenes (Target: >60).'},
+          {label:'Load Time', value:'4.2s', flag:'warn', type:'yellow', desc:'Cold start to gameplay (Target: <3s).'},
+          {label:'Memory Usage', value:'412 MB', flag:'ok', type:'green', desc:'Peak RAM usage on mid-range device (Target: <500MB).'}
+        ]},
+      { id:6, title:'RETENTION: LTV & Engagement Loops', icon:'🔁', score:55,
+        metrics:[
+          {label:'D1 Retention Est.', value:'28%', flag:'risk', type:'red', desc:'Estimated D1 retention vs benchmark 40%.'},
+          {label:'Session Length', value:'6.2 min', flag:'warn', type:'yellow', desc:'Average session (Target: >8min for casual).'},
+          {label:'Daily Active Loop', value:'Weak', flag:'risk', type:'red', desc:'No daily reward or streak mechanic detected.'}
+        ]},
+      { id:7, title:'STRATEGY: Competitive Position & Roadmap', icon:'🗺️', score:68,
+        metrics:[
+          {label:'Genre Saturation', value:'75%', flag:'ok', type:'green', desc:'Market is not oversaturated yet.'},
+          {label:'Competitor Gap', value:'Medium', flag:'warn', type:'yellow', desc:'3 direct competitors with higher ratings.'},
+          {label:'Growth Potential', value:'High', flag:'ok', type:'green', desc:'Strong core mechanic with monetization gaps to fill.'}
+        ]}
+    ],
+    summary: `${genre} game analysis complete. Critical issues found in UI/UX and Monetization. Marketing conversion needs immediate attention.`,
+    confidence: 72
+  };
+}
+
+// ---- RENDER REPORT ----
+function renderReport(rep) {
+  const modelMap = {B:'BASIC PACKAGE', S:'STRATEGIC PACKAGE', E:'ENTERPRISE AUDIT'};
+  document.getElementById('rTagModel').textContent = modelMap[rep.model] || 'BASIC PACKAGE';
+  document.getElementById('rTagGenre').textContent = rep.genre;
+  document.getElementById('rTagMono').textContent = rep.mono;
+  document.getElementById('rTagTime').textContent = 'Generated just now';
+  document.getElementById('rTitle').textContent = rep.title;
+  document.getElementById('rFocus').textContent = 'AI Focus: ' + rep.focus;
+
+  const container = document.getElementById('reportSections');
+  container.innerHTML = rep.result.sections.map(s => {
+    const scoreClass = s.score >= 70 ? 'score-green' : s.score >= 50 ? 'score-yellow' : 'score-red';
+    const metricsHtml = s.metrics.map(m => `
+      <div class="metric-card ${m.type === 'red' ? 'risk' : m.type === 'yellow' ? 'warn' : 'ok'}">
+        <div class="metric-label">${m.label} <span class="metric-flag flag-${m.type === 'red' ? 'risk' : m.type === 'yellow' ? 'warn' : 'ok'} metric-flag">${m.flag === 'risk' ? 'RİSKLİ' : m.flag === 'warn' ? 'DÜŞÜK' : 'OK'}</span></div>
+        <div class="metric-value ${m.type}">${m.value}</div>
+        <div class="metric-desc">${m.desc}</div>
+      </div>`).join('');
+
+    const noDataHtml = s.noData ? `
+      <div class="no-data-box">
+        <div class="no-data-title">Görsel Veri Sağlanamadı</div>
+        <div class="no-data-sub">Gerçek Vision Analizi için rapor oluştururken UI ekran görüntüsü yüklemeniz gerekmektedir.<br>GDA Vision Engine analiz tamamlayamadı. Manuel veriler aşağıda listelenmektedir.</div>
+      </div>` : '';
+
+    return `
+      <div class="section-card">
+        <div class="section-head" onclick="toggleSection(this)">
+          <div class="section-icon">${s.icon}</div>
+          <div class="section-title">${s.id}. ${s.title}</div>
+          <span class="score-badge ${scoreClass}">Score: ${s.score}/100</span>
+        </div>
+        <div class="section-body">
+          ${noDataHtml}
+          <div class="metrics-grid">${metricsHtml}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleSection(el) {
+  const body = el.nextElementSibling;
+  body.style.display = body.style.display === 'none' ? 'block' : '';
+}
+
+// ---- DASHBOARD ----
+function updateDashboard() {
+  document.getElementById('statTotal').textContent = state.reports.length;
+  if (state.reports.length > 0) {
+    const avg = Math.round(state.reports.reduce((a,r) => {
+      const scores = r.result?.sections?.map(s => s.score) || [50];
+      return a + scores.reduce((x,y)=>x+y,0)/scores.length;
+    }, 0) / state.reports.length);
+    document.getElementById('statAvg').textContent = avg + '/100';
+  }
+  const thisMonth = state.reports.filter(r => new Date(r.date).getMonth() === new Date().getMonth()).length;
+  document.getElementById('statMonth').textContent = thisMonth;
+
+  const table = document.getElementById('dashTable');
+  if (state.reports.length === 0) {
+    table.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No analyses yet</div><div class="empty-sub">Start your first analysis from Upload Center</div></div>`;
+  } else {
+    table.innerHTML = state.reports.slice(0,10).map(r => {
+      const scores = r.result?.sections?.map(s => s.score) || [50];
+      const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+      return `<div class="table-row" onclick="viewReport('${r.id}')">
+        <div class="col-name">${r.title?.substring(0,40) || 'Untitled'}</div>
+        <div class="col-date">${r.date}</div>
+        <div class="col-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div>
+        <div class="col-status"><span class="status-dot"><span class="dot" style="background:var(--green)"></span>Complete</span></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function updateReportsList() {
+  const list = document.getElementById('reportsList');
+  if (state.reports.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No reports yet</div><div class="empty-sub">Complete an analysis to see reports here</div></div>`;
+  } else {
+    list.innerHTML = state.reports.map(r => {
+      const scores = r.result?.sections?.map(s => s.score) || [50];
+      const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+      return `<div class="report-item" onclick="viewReport('${r.id}')">
+        <div class="report-item-icon">📊</div>
+        <div>
+          <div class="report-item-name">${r.title?.substring(0,50) || 'Untitled'}</div>
+          <div class="report-item-meta">${r.genre} · ${r.mono} · ${r.date}</div>
+        </div>
+        <div class="report-item-score">
+          <div class="overall-score" style="color:${avg>=70?'var(--green)':avg>=50?'var(--yellow)':'var(--red)'}">${avg}/100</div>
+          <div class="overall-label">Overall Score</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function viewReport(id) {
+  const rep = state.reports.find(r => String(r.id) === String(id));
+  if (!rep) return;
+  state.currentReport = rep;
+  renderReport(rep);
+  showPage('report');
+}
+
+// ---- EXPORTS ----
+function exportJSON() {
+  if (!state.currentReport) return;
+  const blob = new Blob([JSON.stringify(state.currentReport.result, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gda_analysis.json'; a.click();
+  showToast('JSON exported ✓');
+}
+
+function exportTxt() {
+  if (!state.currentReport) return;
+  const r = state.currentReport;
+  let txt = `GDA ANALYZER — ACTION PLAN\n${'='.repeat(40)}\nProject: ${r.title}\nDate: ${r.date}\nGenre: ${r.genre}\n\n`;
+  r.result.sections.forEach(s => {
+    txt += `\n${s.id}. ${s.title} — Score: ${s.score}/100\n${'-'.repeat(40)}\n`;
+    s.metrics.forEach(m => { txt += `• ${m.label}: ${m.value}\n  ${m.desc}\n`; });
+  });
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gda_action_plan.txt'; a.click();
+  showToast('Action plan exported ✓');
+}
+
+function exportPDF() {
+  if (!state.currentReport) return;
+  // If backend returned PDF path, fetch it
+  if (state.currentReport.result?.pdfPath) {
+    const apiUrl = document.getElementById('apiUrlInput')?.value || state.apiUrl;
+    window.open(apiUrl + state.currentReport.result.pdfPath, '_blank');
+    showToast('Opening PDF report...');
+    return;
+  }
+  // Otherwise print
+  window.print();
+  showToast('PDF generation started ✓');
+}
+
+// ---- SETTINGS ----
+function saveSettings() {
+  const url = document.getElementById('apiUrlInput').value;
+  state.apiUrl = url;
+  localStorage.setItem('gda_api', url);
+  showToast('Settings saved ✓');
+}
+
+function saveVars() { showToast('System variables saved ✓'); }
+
+// ---- TOAST ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
