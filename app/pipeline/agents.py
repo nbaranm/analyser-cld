@@ -221,7 +221,7 @@ Use REAL data you find. Return this EXACT JSON:
   }}
 }}"""
 
-    result = _call_claude(SYSTEM_PROMPT, prompt, web_search=True, max_tokens=8000)
+    result = _call_claude(SYSTEM_PROMPT, prompt, web_search=False, max_tokens=8000)
     if "error" in result:
         return _fallback_result(url, genre, mono, result["error"])
     return result
