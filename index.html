@@ -849,11 +849,18 @@ async function startAnalysis() {
   const iv = setInterval(() => { cur++; renderSteps(); if(cur>=steps.length) clearInterval(iv); }, 800);
 
   let result;
-  if (link || S.files.length > 0) {
-    result = await callAPI(S.files[0] || null, genre, link);
-  } else {
-    await sleep(6400);
-    result = mockResult(S.model, genre, link, focus);
+  try {
+    if (link || S.files.length > 0) {
+      result = await callAPI(S.files[0] || null, genre, link);
+    } else {
+      await sleep(3000);
+      result = mockResult(S.model, genre, link, focus);
+    }
+  } catch(err) {
+    clearInterval(iv);
+    alert(S.lang === 'tr' ? 'Hata: ' + err.message : 'Error: ' + err.message);
+    goPage('upload');
+    return;
   }
 
   clearInterval(iv); cur = steps.length; renderSteps();
@@ -897,7 +904,7 @@ async function callAPI(file, genre, storeUrl) {
     return transformAPINew(data, genre);
   } catch(e) {
     console.error('API call failed:', e.message);
-    return mockResult(S.model, genre, storeUrl || (file && file.name) || 'Game', 'Full Audit');
+    throw new Error('Backend sunucusuna ulaşılamadı veya hata oluştu: ' + e.message + '\n\nNot: Ayarlar sayfasından Backend API URL\'sini kontrol edin.');
   }
 }
 
@@ -908,12 +915,12 @@ function transformAPI(d, genre) {
 
 function transformAPINew(d, genre) {
   // New format from real API with web search
-  if (d.error) {
-    console.warn('API returned error:', d.error);
-    return mockResult(S.model, genre, 'Game', 'Full Audit');
+  if (d.error || d.error_detail) {
+    console.warn('API returned error:', d.error || d.error_detail);
+    throw new Error(d.error || d.error_detail);
   }
   if (!d.sections) {
-    return mockResult(S.model, genre, 'Game', 'Full Audit');
+    throw new Error('API response missing sections data.');
   }
   const sectionMap = {
     'ui_ux': {id:1, title:'GAME UI: Architecture & Component Vision', icon:'🖥️'},
